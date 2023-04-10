@@ -18,7 +18,8 @@
       
       <guid>https://welldonesanmu.github.io/posts/git/</guid>
       <description>Git 推送的用法及常见指令 echo &amp;ldquo;# Blog&amp;rdquo; &amp;raquo; README.md git init git add README.md git commit -m &amp;ldquo;first commit&amp;rdquo; git branch -M main git remote add origin git@github.com:welldonesanmu/Blog.git git push -u origin main
-.md 文件换行：在每一行的末尾加上 &amp;ldquo;&amp;quot; ,然后再回车键。 新增了一个脚本，用于每次添加完之后自动deploy.</description>
+.md 文件换行：在每一行的末尾加上 &amp;ldquo;&amp;quot; ,然后再回车键。
+新增了一个脚本，用于每次添加完之后自动deploy.</description>
     </item>
     
   </channel>
