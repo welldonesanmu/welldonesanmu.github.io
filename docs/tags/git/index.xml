@@ -17,7 +17,8 @@
       <pubDate>Mon, 10 Apr 2023 14:36:09 +0800</pubDate>
       
       <guid>https://welldonesanmu.github.io/posts/git/</guid>
-      <description>Git 推送的用法及常见指令 echo &amp;ldquo;# Blog&amp;rdquo; &amp;raquo; README.md git init git add README.md git commit -m &amp;ldquo;first commit&amp;rdquo; git branch -M main git remote add origin git@github.com:welldonesanmu/Blog.git git push -u origin main</description>
+      <description>Git 推送的用法及常见指令 echo &amp;ldquo;# Blog&amp;rdquo; &amp;raquo; README.md git init git add README.md git commit -m &amp;ldquo;first commit&amp;rdquo; git branch -M main git remote add origin git@github.com:welldonesanmu/Blog.git git push -u origin main
+.md 文件换行：在每一行的末尾加上 &amp;ldquo;&amp;quot; ,然后再回车键。</description>
     </item>
     
   </channel>
