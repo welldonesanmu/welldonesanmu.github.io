@@ -3,3 +3,41 @@ This is just a placeholder blank stylesheet so as to support adding custom style
 
 Read https://github.com/adityatelange/hugo-PaperMod/wiki/FAQs#bundling-custom-css-with-themes-assets for more info
 */
+.entry-cover1 {
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.post-entry {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.entry-cover {
+    border-radius: 10px;
+    overflow: hidden;
+    width: 50%;
+    margin-bottom: unset;
+
+    max-height: 150px;
+    display: grid;
+    align-content: center;
+}
+
+.post-info {
+    display: inline-block;
+    overflow: hidden;
+    width: 100%;
+    padding-right: 10px;
+}
+
+.entry-cover1 img {
+    border-radius: var(--radius);
+    pointer-events: none;
+    width: 100%;
+    height: auto;
+    margin-bottom: 40px;
+}
+
