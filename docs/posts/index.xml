@@ -10,7 +10,17 @@
       <link>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Mon, 10 Apr 2023 14:36:09 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 11 Apr 2023 10:36:40 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Picture</title>
+      <link>https://welldonesanmu.github.io/posts/picture/</link>
+      <pubDate>Tue, 11 Apr 2023 10:36:40 +0800</pubDate>
+      
+      <guid>https://welldonesanmu.github.io/posts/picture/</guid>
+      <description>This is the instruction about picture embed. reference：
+https://www.sulvblog.cn/posts/blog/img_right/</description>
+    </item>
+    
     <item>
       <title>Git</title>
       <link>https://welldonesanmu.github.io/posts/git/</link>
