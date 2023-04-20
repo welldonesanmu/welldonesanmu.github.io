@@ -9,7 +9,7 @@ cover:
     image: img/avatars.jpg
     alt: 'Test_picture'
 tags:
-  -  website           
+  -  Website           
 ---
 
 # This is the instruction about picture embed.
@@ -19,5 +19,3 @@ tags:
 ![](/img/avatars.jpg)
 
 
-reference：\
-https://www.sulvblog.cn/posts/blog/img_right/

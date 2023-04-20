@@ -1,0 +1,23 @@
+---
+title: "Deep Learning Trick"
+date: 2023-04-19T20:35:40+08:00
+lastmod: 2023-04-19T20:35:40+08:00 
+draft: false
+author: ["Sanmu"] 
+comments: true 
+tags:
+  - Deep Learning            
+---
+
+# Trick
+
+**Epoch**：1个epoch等于使用训练集中的全部样本训练一次，通俗的讲几次epoch就是整个数据集被轮几次。\
+**Batch Size**：全部数据是分批来训练的，批的大小称为Batch Size。\
+**iteration**：1个iteration等于使用batchsize个样本训练一次，也就是说训练一批的样本，称为一次迭代。
+> 比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。
+
+**batch**: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。
+> batchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。
+
+有17种trick可以有效缩短运行时间：\
+![](https://picbed-1259651262.cos.ap-nanjing.myqcloud.com/img/微信截图_20230419204224.png)
