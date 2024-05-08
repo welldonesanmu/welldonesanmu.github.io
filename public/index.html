@@ -2,7 +2,7 @@
 <html lang="en" dir="auto">
 
 <head>
-	<meta name="generator" content="Hugo 0.92.2" /><meta charset="utf-8">
+	<meta name="generator" content="Hugo 0.110.0"><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
@@ -14,12 +14,12 @@
 <meta name="google-site-verification" content="XYZabc">
 <meta name="yandex-verification" content="XYZabc">
 <meta name="msvalidate.01" content="XYZabc">
-<link crossorigin="anonymous" href="/assets/css/stylesheet.3613efbd0b1772781e8f49935e973cae632a7f61471c05b17be155505ccf87b5.css" integrity="sha256-NhPvvQsXcngej0mTXpc8rmMqf2FHHAWxe&#43;FVUFzPh7U=" rel="preload stylesheet" as="style">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.76360485988b2c36106a3ffacc6d884d6bd71cabfcc81ca9a4964617d251b660.css" integrity="sha256-djYEhZiLLDYQaj/6zG2ITWvXHKv8yByppJZGF9JRtmA=" rel="preload stylesheet" as="style">
 <link rel="icon" href="https://welldonesanmu.github.io/img/avatars.jpg">
-<link rel="icon" type="image/png" sizes="16x16" href="https://welldonesanmu.github.io/%3Clink%20/%20abs%20url%3E">
-<link rel="icon" type="image/png" sizes="32x32" href="https://welldonesanmu.github.io/%3Clink%20/%20abs%20url%3E">
-<link rel="apple-touch-icon" href="https://welldonesanmu.github.io/%3Clink%20/%20abs%20url%3E">
-<link rel="mask-icon" href="https://welldonesanmu.github.io/%3Clink%20/%20abs%20url%3E">
+<link rel="icon" type="image/png" sizes="16x16" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<link rel="icon" type="image/png" sizes="32x32" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<link rel="apple-touch-icon" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<link rel="mask-icon" href="https://welldonesanmu.github.io/img/avatars.jpg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
 <link rel="alternate" type="application/rss+xml" href="https://welldonesanmu.github.io/index.xml">
@@ -183,21 +183,104 @@
     </footer>
 </article>
 
-<article class="post-entry"> 
-  <header class="entry-header">
-    <h2>2023.4.9
-    </h2>
-  </header>
-  <div class="entry-content">
-    <p>认识她的第9天 今天晚上看了电影，但是没有发给她，只在朋友圈发了一条复旦新闻馆动态，像预想的一样，没有收到任何评论和点赞。我深深呼吸了一口气，都是好事啦。</p>
-  </div>
-  <footer class="entry-footer"><span title='2023-04-09 23:21:57 +0800 CST'>April 9, 2023</span>&nbsp;·&nbsp;Sanmu</footer>
-  <a class="entry-link" aria-label="post link to 2023.4.9" href="https://welldonesanmu.github.io/posts/2023.4.9/"></a>
+<article class="post-entry">
+  
+  <div class="post-info">  
+    <header class="entry-header">
+      <h2>Test
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>小崩溃 这个Test为什么一直还是没有搞好</p>
+    </div>
+    <footer class="entry-footer"><span title='2024-05-08 11:47:15 +0800 CST'>May 8, 2024</span>&nbsp;·&nbsp;Sanmu</footer>
+  </div>   
+  <a class="entry-link" aria-label="post link to Test" href="https://welldonesanmu.github.io/posts/test/"></a>
 </article>
+
+<article class="post-entry">
+  
+  <div class="post-info">  
+    <header class="entry-header">
+      <h2>2023.4.20
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p></p>
+    </div>
+    <footer class="entry-footer"><span title='2023-04-20 23:20:59 +0800 CST'>April 20, 2023</span>&nbsp;·&nbsp;Sanmu</footer>
+  </div>   
+  <a class="entry-link" aria-label="post link to 2023.4.20" href="https://welldonesanmu.github.io/posts/2023.4.20/"></a>
+</article>
+
+<article class="post-entry">
+  
+  <div class="post-info">  
+    <header class="entry-header">
+      <h2>Deep Learning Trick
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>Trick Epoch：1个epoch等于使用训练集中的全部样本训练一次，通俗的讲几次epoch就是整个数据集被轮几次。
+Batch Size：全部数据是分批来训练的，批的大小称为Batch Size。
+iteration：1个iteration等于使用batchsize个样本训练一次，也就是说训练一批的样本，称为一次迭代。
+比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。
+batch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。
+batchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。
+有17种trick可以有效缩短运行时间：</p>
+    </div>
+    <footer class="entry-footer"><span title='2023-04-19 20:35:40 +0800 CST'>April 19, 2023</span>&nbsp;·&nbsp;Sanmu</footer>
+  </div>   
+  <a class="entry-link" aria-label="post link to Deep Learning Trick" href="https://welldonesanmu.github.io/posts/deep-learning-trick/"></a>
+</article>
+
+<article class="post-entry">
+  
+  <div class="post-info">  
+    <header class="entry-header">
+      <h2>English writing
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>Notes Move 1 Establishing a research territory Move 2 Establishing a niche Move 3 Presenting the present work </p>
+    </div>
+    <footer class="entry-footer"><span title='2023-04-12 15:02:38 +0800 CST'>April 12, 2023</span>&nbsp;·&nbsp;Sanmu</footer>
+  </div>   
+  <a class="entry-link" aria-label="post link to English writing" href="https://welldonesanmu.github.io/posts/english_writing/"></a>
+</article>
+
+<article class="post-entry">
+  
+  <div class="post-info">  
+    <header class="entry-header">
+      <h2>2023.4.11
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>是你吗？ 今天给我的感觉已经像是触摸在云层中的样子了，可能是可能不是，可能触碰可能没有触碰，可能只剩下了一种阳光下开心微笑的剪影，也可能是Creep在心中回荡。
+是真实的吗？
+是虚假的吗？
+现在愈发能感觉到Eason病态三部曲的滋味，WEIRDO WEIRDO WEIRDO。
+很多东西都是纸里包着的一层，无论是身旁的人还是周围的人。
+所以
+是你吗？
+还是自己吗？
+4-11于深夜。</p>
+    </div>
+    <footer class="entry-footer"><span title='2023-04-11 23:46:38 +0800 CST'>April 11, 2023</span>&nbsp;·&nbsp;Sanmu</footer>
+  </div>   
+  <a class="entry-link" aria-label="post link to 2023.4.11" href="https://welldonesanmu.github.io/posts/2023.4.11/"></a>
+</article>
+<footer class="page-footer">
+  <nav class="pagination">
+    <a class="next" href="https://welldonesanmu.github.io/page/2/">Next&nbsp;&nbsp;»
+    </a>
+  </nav>
+</footer>
     </main>
     
 <footer class="footer">
-    <span>&copy; 2023 <a href="https://welldonesanmu.github.io">Sanmu</a></span>
+    <span>&copy; 2024 <a href="https://welldonesanmu.github.io">Sanmu</a></span>
 
 </footer>
 <a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">

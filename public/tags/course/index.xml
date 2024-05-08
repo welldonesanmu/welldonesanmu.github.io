@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Course on Sanmu</title>
+    <link>https://welldonesanmu.github.io/tags/course/</link>
+    <description>Recent content in Course on Sanmu</description>
+    <image>
+      <title>Sanmu</title>
+      <url>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Wed, 12 Apr 2023 15:02:38 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/tags/course/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>English writing</title>
+      <link>https://welldonesanmu.github.io/posts/english_writing/</link>
+      <pubDate>Wed, 12 Apr 2023 15:02:38 +0800</pubDate>
+      
+      <guid>https://welldonesanmu.github.io/posts/english_writing/</guid>
+      <description>Notes Move 1 Establishing a research territory Move 2 Establishing a niche Move 3 Presenting the present work </description>
+    </item>
+    
+  </channel>
+</rss>
