@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Recommend on Sanmu</title>
+    <link>https://welldonesanmu.github.io/tags/recommend/</link>
+    <description>Recent content in Recommend on Sanmu</description>
+    <image>
+      <title>Sanmu</title>
+      <url>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Wed, 08 May 2024 11:00:23 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/tags/recommend/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>2024.5.8</title>
+      <link>https://welldonesanmu.github.io/posts/2024.5.8/</link>
+      <pubDate>Wed, 08 May 2024 11:00:23 +0800</pubDate>
+      
+      <guid>https://welldonesanmu.github.io/posts/2024.5.8/</guid>
+      <description>历经很多Bug之后重启项目 记录一下，后续在这个地方更新内容。</description>
+    </item>
+    
+  </channel>
+</rss>

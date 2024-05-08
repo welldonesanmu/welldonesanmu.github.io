@@ -10,10 +10,10 @@
 <meta name="description" content="Trick Epoch：1个epoch等于使用训练集中的全部样本训练一次，通俗的讲几次epoch就是整个数据集被轮几次。
 Batch Size：全部数据是分批来训练的，批的大小称为Batch Size。
 iteration：1个iteration等于使用batchsize个样本训练一次，也就是说训练一批的样本，称为一次迭代。
- 比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。
- batch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。
- batchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。
- 有17种trick可以有效缩短运行时间：">
+比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。
+batch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。
+batchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。
+有17种trick可以有效缩短运行时间：">
 <meta name="author" content="Sanmu">
 <link rel="canonical" href="https://welldonesanmu.github.io/posts/deep-learning-trick/">
 <meta name="google-site-verification" content="XYZabc">
@@ -69,10 +69,10 @@ iteration：1个iteration等于使用batchsize个样本训练一次，也就是�
 <meta property="og:description" content="Trick Epoch：1个epoch等于使用训练集中的全部样本训练一次，通俗的讲几次epoch就是整个数据集被轮几次。
 Batch Size：全部数据是分批来训练的，批的大小称为Batch Size。
 iteration：1个iteration等于使用batchsize个样本训练一次，也就是说训练一批的样本，称为一次迭代。
- 比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。
- batch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。
- batchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。
- 有17种trick可以有效缩短运行时间：" />
+比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。
+batch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。
+batchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。
+有17种trick可以有效缩短运行时间：" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://welldonesanmu.github.io/posts/deep-learning-trick/" /><meta property="og:image" content="https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2023-04-19T20:35:40+08:00" />
@@ -85,10 +85,10 @@ iteration：1个iteration等于使用batchsize个样本训练一次，也就是�
 <meta name="twitter:description" content="Trick Epoch：1个epoch等于使用训练集中的全部样本训练一次，通俗的讲几次epoch就是整个数据集被轮几次。
 Batch Size：全部数据是分批来训练的，批的大小称为Batch Size。
 iteration：1个iteration等于使用batchsize个样本训练一次，也就是说训练一批的样本，称为一次迭代。
- 比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。
- batch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。
- batchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。
- 有17种trick可以有效缩短运行时间："/>
+比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。
+batch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。
+batchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。
+有17种trick可以有效缩短运行时间："/>
 
 
 <script type="application/ld+json">
@@ -117,11 +117,11 @@ iteration：1个iteration等于使用batchsize个样本训练一次，也就是�
   "@type": "BlogPosting",
   "headline": "Deep Learning Trick",
   "name": "Deep Learning Trick",
-  "description": "Trick Epoch：1个epoch等于使用训练集中的全部样本训练一次，通俗的讲几次epoch就是整个数据集被轮几次。\nBatch Size：全部数据是分批来训练的，批的大小称为Batch Size。\niteration：1个iteration等于使用batchsize个样本训练一次，也就是说训练一批的样本，称为一次迭代。\n 比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。\n batch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。\n batchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。\n 有17种trick可以有效缩短运行时间：",
+  "description": "Trick Epoch：1个epoch等于使用训练集中的全部样本训练一次，通俗的讲几次epoch就是整个数据集被轮几次。\nBatch Size：全部数据是分批来训练的，批的大小称为Batch Size。\niteration：1个iteration等于使用batchsize个样本训练一次，也就是说训练一批的样本，称为一次迭代。\n比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。\nbatch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。\nbatchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。\n有17种trick可以有效缩短运行时间：",
   "keywords": [
     "Deep Learning"
   ],
-  "articleBody": "Trick Epoch：1个epoch等于使用训练集中的全部样本训练一次，通俗的讲几次epoch就是整个数据集被轮几次。\nBatch Size：全部数据是分批来训练的，批的大小称为Batch Size。\niteration：1个iteration等于使用batchsize个样本训练一次，也就是说训练一批的样本，称为一次迭代。\n 比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。\n batch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。\n batchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。\n 有17种trick可以有效缩短运行时间：\n",
+  "articleBody": "Trick Epoch：1个epoch等于使用训练集中的全部样本训练一次，通俗的讲几次epoch就是整个数据集被轮几次。\nBatch Size：全部数据是分批来训练的，批的大小称为Batch Size。\niteration：1个iteration等于使用batchsize个样本训练一次，也就是说训练一批的样本，称为一次迭代。\n比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。\nbatch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。\nbatchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。\n有17种trick可以有效缩短运行时间：\n",
   "wordCount" : "17",
   "inLanguage": "en",
   "datePublished": "2023-04-19T20:35:40+08:00",
@@ -258,7 +258,7 @@ iteration：1个iteration等于使用batchsize个样本训练一次，也就是�
     </main>
     
 <footer class="footer">
-    <span>&copy; 2023 <a href="https://welldonesanmu.github.io">Sanmu</a></span>
+    <span>&copy; 2024 <a href="https://welldonesanmu.github.io">Sanmu</a></span>
 
 </footer>
 <a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
