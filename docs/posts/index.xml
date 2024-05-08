@@ -10,25 +10,7 @@
       <link>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Wed, 08 May 2024 11:47:15 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Test</title>
-      <link>https://welldonesanmu.github.io/posts/test/</link>
-      <pubDate>Wed, 08 May 2024 11:47:15 +0800</pubDate>
-      
-      <guid>https://welldonesanmu.github.io/posts/test/</guid>
-      <description>小崩溃 这个Test为什么一直还是没有搞好</description>
-    </item>
-    
-    <item>
-      <title>2023.4.20</title>
-      <link>https://welldonesanmu.github.io/posts/2023.4.20/</link>
-      <pubDate>Thu, 20 Apr 2023 23:20:59 +0800</pubDate>
-      
-      <guid>https://welldonesanmu.github.io/posts/2023.4.20/</guid>
-      <description></description>
-    </item>
-    
+    <lastBuildDate>Wed, 19 Apr 2023 20:35:40 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Deep Learning Trick</title>
       <link>https://welldonesanmu.github.io/posts/deep-learning-trick/</link>
