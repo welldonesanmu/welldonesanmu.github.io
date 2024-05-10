@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Interview on Sanmu</title>
+    <link>https://welldonesanmu.github.io/tags/interview/</link>
+    <description>Recent content in Interview on Sanmu</description>
+    <image>
+      <title>Sanmu</title>
+      <url>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Fri, 10 May 2024 17:48:28 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/tags/interview/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>字节一面</title>
+      <link>https://welldonesanmu.github.io/posts/%E5%AD%97%E8%8A%82%E4%B8%80%E9%9D%A2/</link>
+      <pubDate>Fri, 10 May 2024 17:48:28 +0800</pubDate>
+      
+      <guid>https://welldonesanmu.github.io/posts/%E5%AD%97%E8%8A%82%E4%B8%80%E9%9D%A2/</guid>
+      <description>论文相关
+详细实现（需要重新整理一版） 如果Graph Diffusion技术里 θ_k相当于是随机游走的概率因子的话，那和GraphSAGE有什么区别？ Loss是怎么实现的？和NCELoss的区别？ 两篇文章的区别是什么？ 对比视图的anchor选取？正负样本生成数量比例？ 对比学习常用的Loss是什么？ 使用Transformer去抽取图表征是否可行？ 了解GraphTransformer吗？ 推荐系统以及项目相关
+推荐系统的架构实现是什么？ 召回层常用的什么算法？ Graph embedding怎么用在推荐上面的？ 在各个阶段，图神经网络怎么应用？ 召回层除了局部敏感哈希外还有什么方法加速召回？ AUC曲线的物理意义？AUC越高越好那么超过多少算是越高？ 说一下DIN的结构？ 项目中提到的会在排序层加入组合类别的神经网络，具体讲一下？ 手撕
+使用rand5实现rand7。 给出一个数组，求出其中的逆序对个数；输出个数，数组中数字小于100000。 反问
+部门实现推荐系统需要哪些技术栈？答：自研系统，服务端使用C++，模型搭建使用TensorFlow。 模型怎么上线耦合？答：算法工程师不管这个，有部门专门负责。 无Hadoop、Spark，all in算法实现
+项目称之为练手
+自我评价：C
+Timeline：5.7&amp;ndash;5.11（等挂）</description>
+    </item>
+    
+  </channel>
+</rss>
