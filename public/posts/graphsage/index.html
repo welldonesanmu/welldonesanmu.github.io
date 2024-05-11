@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>GraphSAGE | Sanmu</title>
+<meta name="keywords" content="GNNs">
+<meta name="description" content="GraphSAGE Inductive Representation Learning on Large Graphs
+两点强调：
+Inductive Large Graphs 首先明确一个概念：在推荐系统中Graph embedding采用直推式或称推导式（transductive）和归纳式（Inductive）两种，区别就是对于一个新加入的节点，模型是否能够在不重新学习之前预训练好的embedding的情况下，对这个新加入节点的特征进行嵌入表征。
+这个概念比较老，面试时不要被迷惑。
+直推式 基于矩阵分解、DeepWalk、Node2Vec 归纳式 GraphSAGE、 GCN、 GAT、 GCLs 直推式这类方法通常包括直接优化节点嵌入的方法，如DeepWalk、Node2Vec等。这些方法在一个特定的图上学习节点的嵌入向量，并且假设训练时使用的所有节点在预测时都是可见的。这些方法的共同点是它们通常需要对图中所有节点进行处理，并且一次学习所有节点的嵌入。因此，它们通常不具备归纳能力，即难以直接应对图中新增节点的情况，除非重新进行嵌入的学习过程。 对于GCN是哪种范式一下就明了了，GCN通过学习一个卷积过程，其中节点的特征信息是通过其邻居的特征进行聚合更新的。这个过程允许GCN处理未见过的节点，所以是归纳式。但GCN的归纳能力取决于它的应用方式和具体的训练设置。例如，如果GCN在一个特定的图结构上训练，并且仅用于相同结构的图，则其行为更倾向于转导式学习。但如果其训练过程涵盖了多种图结构，并且模型设计上允许它适应不同的图，那么它就显示出强大的归纳能力。（多图案例是蛋白质结构预测） GCLs通常在无监督或自监督的设置下用于学习图或节点的表示。这种方法通过最大化正样本对的相似性和最小化负样本对的相似性来学习有效的嵌入。图对比学习的关键优势在于它不依赖于标签数据，而是通过数据本身的结构和内容来学习表示。这个也是归纳式的。 GraphSAGE（Graph Sample and Aggregation）是一种归纳式图神经网络模型，它设计用来生成节点的嵌入，即使是在训练过程中未见过的节点（这一点很好保证：1训练时隐藏节点2邻居采样）。这种归纳能力源于其独特的聚合机制，该机制能够从节点的局部邻域信息中学习如何有效地生成嵌入。
+算法流程：
+GraphSAGE实现归纳式学习的关键方面：
+1. 局部邻域聚合 GraphSAGE的核心思想是使用聚合函数来合成一个节点的邻居信息，形成该节点的嵌入。这意味着生成节点嵌入不依赖于整个图的结构，而是依赖于每个节点的局部邻域。具体聚合函数可以是简单的均值聚合、池化聚合或LSTM聚合等。通过这种方式，模型可以灵活地应对图中的新节点，因为它只需要新节点的局部信息就能计算其嵌入。
+2. 邻居采样 由于实际图往往非常大，直接使用所有邻居的信息进行聚合计算是不现实的。GraphSAGE引入了邻居采样策略，即从每个节点的邻居中随机选择一个固定大小的子集，然后只使用这些采样邻居的信息来进行聚合。这不仅减少了计算负担，而且通过随机性增加了模型的泛化能力。
+3. 多层聚合 GraphSAGE通常使用多层聚合结构，每层都对应一个聚合步骤。每个节点在每一层聚合其邻居的信息，然后将聚合结果传递到下一层。这样，更高层的聚合可以间接包含更远邻居的信息。这种分层的聚合方式允许模型捕获从近邻到远邻的结构信息。
+TensorFlow实现：
+#!/usr/bin/env python # -*- coding:utf-8 -*- &#34;&#34;&#34; 参考文献: [1] Hamilton W, Ying Z, Leskovec J. Inductive representation learning on large graphs[C]//Advances in Neural Information Processing Systems. 2017: 1024-1034. (https://papers.nips.cc/paper/6703-inductive-representation-learning-on-large-graphs.pdf) &#34;&#34;&#34; import numpy as np import tensorflow as tf from tensorflow.">
+<meta name="author" content="Sanmu">
+<link rel="canonical" href="https://welldonesanmu.github.io/posts/graphsage/">
+<meta name="google-site-verification" content="XYZabc">
+<meta name="yandex-verification" content="XYZabc">
+<meta name="msvalidate.01" content="XYZabc">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.76360485988b2c36106a3ffacc6d884d6bd71cabfcc81ca9a4964617d251b660.css" integrity="sha256-djYEhZiLLDYQaj/6zG2ITWvXHKv8yByppJZGF9JRtmA=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.f413e19d0714851f6474e7ee9632408e58ac146fbdbe62747134bea2fa3415e0.js" integrity="sha256-9BPhnQcUhR9kdOfuljJAjlisFG&#43;9vmJ0cTS&#43;ovo0FeA="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<link rel="icon" type="image/png" sizes="16x16" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<link rel="icon" type="image/png" sizes="32x32" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<link rel="apple-touch-icon" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<link rel="mask-icon" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="GraphSAGE" />
+<meta property="og:description" content="GraphSAGE Inductive Representation Learning on Large Graphs
+两点强调：
+Inductive Large Graphs 首先明确一个概念：在推荐系统中Graph embedding采用直推式或称推导式（transductive）和归纳式（Inductive）两种，区别就是对于一个新加入的节点，模型是否能够在不重新学习之前预训练好的embedding的情况下，对这个新加入节点的特征进行嵌入表征。
+这个概念比较老，面试时不要被迷惑。
+直推式 基于矩阵分解、DeepWalk、Node2Vec 归纳式 GraphSAGE、 GCN、 GAT、 GCLs 直推式这类方法通常包括直接优化节点嵌入的方法，如DeepWalk、Node2Vec等。这些方法在一个特定的图上学习节点的嵌入向量，并且假设训练时使用的所有节点在预测时都是可见的。这些方法的共同点是它们通常需要对图中所有节点进行处理，并且一次学习所有节点的嵌入。因此，它们通常不具备归纳能力，即难以直接应对图中新增节点的情况，除非重新进行嵌入的学习过程。 对于GCN是哪种范式一下就明了了，GCN通过学习一个卷积过程，其中节点的特征信息是通过其邻居的特征进行聚合更新的。这个过程允许GCN处理未见过的节点，所以是归纳式。但GCN的归纳能力取决于它的应用方式和具体的训练设置。例如，如果GCN在一个特定的图结构上训练，并且仅用于相同结构的图，则其行为更倾向于转导式学习。但如果其训练过程涵盖了多种图结构，并且模型设计上允许它适应不同的图，那么它就显示出强大的归纳能力。（多图案例是蛋白质结构预测） GCLs通常在无监督或自监督的设置下用于学习图或节点的表示。这种方法通过最大化正样本对的相似性和最小化负样本对的相似性来学习有效的嵌入。图对比学习的关键优势在于它不依赖于标签数据，而是通过数据本身的结构和内容来学习表示。这个也是归纳式的。 GraphSAGE（Graph Sample and Aggregation）是一种归纳式图神经网络模型，它设计用来生成节点的嵌入，即使是在训练过程中未见过的节点（这一点很好保证：1训练时隐藏节点2邻居采样）。这种归纳能力源于其独特的聚合机制，该机制能够从节点的局部邻域信息中学习如何有效地生成嵌入。
+算法流程：
+GraphSAGE实现归纳式学习的关键方面：
+1. 局部邻域聚合 GraphSAGE的核心思想是使用聚合函数来合成一个节点的邻居信息，形成该节点的嵌入。这意味着生成节点嵌入不依赖于整个图的结构，而是依赖于每个节点的局部邻域。具体聚合函数可以是简单的均值聚合、池化聚合或LSTM聚合等。通过这种方式，模型可以灵活地应对图中的新节点，因为它只需要新节点的局部信息就能计算其嵌入。
+2. 邻居采样 由于实际图往往非常大，直接使用所有邻居的信息进行聚合计算是不现实的。GraphSAGE引入了邻居采样策略，即从每个节点的邻居中随机选择一个固定大小的子集，然后只使用这些采样邻居的信息来进行聚合。这不仅减少了计算负担，而且通过随机性增加了模型的泛化能力。
+3. 多层聚合 GraphSAGE通常使用多层聚合结构，每层都对应一个聚合步骤。每个节点在每一层聚合其邻居的信息，然后将聚合结果传递到下一层。这样，更高层的聚合可以间接包含更远邻居的信息。这种分层的聚合方式允许模型捕获从近邻到远邻的结构信息。
+TensorFlow实现：
+#!/usr/bin/env python # -*- coding:utf-8 -*- &#34;&#34;&#34; 参考文献: [1] Hamilton W, Ying Z, Leskovec J. Inductive representation learning on large graphs[C]//Advances in Neural Information Processing Systems. 2017: 1024-1034. (https://papers.nips.cc/paper/6703-inductive-representation-learning-on-large-graphs.pdf) &#34;&#34;&#34; import numpy as np import tensorflow as tf from tensorflow." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://welldonesanmu.github.io/posts/graphsage/" /><meta property="og:image" content="https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-05-11T15:18:34+08:00" />
+<meta property="article:modified_time" content="2024-05-11T15:18:34+08:00" /><meta property="og:site_name" content="Sanmu" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E"/>
+
+<meta name="twitter:title" content="GraphSAGE"/>
+<meta name="twitter:description" content="GraphSAGE Inductive Representation Learning on Large Graphs
+两点强调：
+Inductive Large Graphs 首先明确一个概念：在推荐系统中Graph embedding采用直推式或称推导式（transductive）和归纳式（Inductive）两种，区别就是对于一个新加入的节点，模型是否能够在不重新学习之前预训练好的embedding的情况下，对这个新加入节点的特征进行嵌入表征。
+这个概念比较老，面试时不要被迷惑。
+直推式 基于矩阵分解、DeepWalk、Node2Vec 归纳式 GraphSAGE、 GCN、 GAT、 GCLs 直推式这类方法通常包括直接优化节点嵌入的方法，如DeepWalk、Node2Vec等。这些方法在一个特定的图上学习节点的嵌入向量，并且假设训练时使用的所有节点在预测时都是可见的。这些方法的共同点是它们通常需要对图中所有节点进行处理，并且一次学习所有节点的嵌入。因此，它们通常不具备归纳能力，即难以直接应对图中新增节点的情况，除非重新进行嵌入的学习过程。 对于GCN是哪种范式一下就明了了，GCN通过学习一个卷积过程，其中节点的特征信息是通过其邻居的特征进行聚合更新的。这个过程允许GCN处理未见过的节点，所以是归纳式。但GCN的归纳能力取决于它的应用方式和具体的训练设置。例如，如果GCN在一个特定的图结构上训练，并且仅用于相同结构的图，则其行为更倾向于转导式学习。但如果其训练过程涵盖了多种图结构，并且模型设计上允许它适应不同的图，那么它就显示出强大的归纳能力。（多图案例是蛋白质结构预测） GCLs通常在无监督或自监督的设置下用于学习图或节点的表示。这种方法通过最大化正样本对的相似性和最小化负样本对的相似性来学习有效的嵌入。图对比学习的关键优势在于它不依赖于标签数据，而是通过数据本身的结构和内容来学习表示。这个也是归纳式的。 GraphSAGE（Graph Sample and Aggregation）是一种归纳式图神经网络模型，它设计用来生成节点的嵌入，即使是在训练过程中未见过的节点（这一点很好保证：1训练时隐藏节点2邻居采样）。这种归纳能力源于其独特的聚合机制，该机制能够从节点的局部邻域信息中学习如何有效地生成嵌入。
+算法流程：
+GraphSAGE实现归纳式学习的关键方面：
+1. 局部邻域聚合 GraphSAGE的核心思想是使用聚合函数来合成一个节点的邻居信息，形成该节点的嵌入。这意味着生成节点嵌入不依赖于整个图的结构，而是依赖于每个节点的局部邻域。具体聚合函数可以是简单的均值聚合、池化聚合或LSTM聚合等。通过这种方式，模型可以灵活地应对图中的新节点，因为它只需要新节点的局部信息就能计算其嵌入。
+2. 邻居采样 由于实际图往往非常大，直接使用所有邻居的信息进行聚合计算是不现实的。GraphSAGE引入了邻居采样策略，即从每个节点的邻居中随机选择一个固定大小的子集，然后只使用这些采样邻居的信息来进行聚合。这不仅减少了计算负担，而且通过随机性增加了模型的泛化能力。
+3. 多层聚合 GraphSAGE通常使用多层聚合结构，每层都对应一个聚合步骤。每个节点在每一层聚合其邻居的信息，然后将聚合结果传递到下一层。这样，更高层的聚合可以间接包含更远邻居的信息。这种分层的聚合方式允许模型捕获从近邻到远邻的结构信息。
+TensorFlow实现：
+#!/usr/bin/env python # -*- coding:utf-8 -*- &#34;&#34;&#34; 参考文献: [1] Hamilton W, Ying Z, Leskovec J. Inductive representation learning on large graphs[C]//Advances in Neural Information Processing Systems. 2017: 1024-1034. (https://papers.nips.cc/paper/6703-inductive-representation-learning-on-large-graphs.pdf) &#34;&#34;&#34; import numpy as np import tensorflow as tf from tensorflow."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Posts",
+      "item": "https://welldonesanmu.github.io/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "GraphSAGE",
+      "item": "https://welldonesanmu.github.io/posts/graphsage/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "GraphSAGE",
+  "name": "GraphSAGE",
+  "description": "GraphSAGE Inductive Representation Learning on Large Graphs\n两点强调：\nInductive Large Graphs 首先明确一个概念：在推荐系统中Graph embedding采用直推式或称推导式（transductive）和归纳式（Inductive）两种，区别就是对于一个新加入的节点，模型是否能够在不重新学习之前预训练好的embedding的情况下，对这个新加入节点的特征进行嵌入表征。\n这个概念比较老，面试时不要被迷惑。\n直推式 基于矩阵分解、DeepWalk、Node2Vec 归纳式 GraphSAGE、 GCN、 GAT、 GCLs 直推式这类方法通常包括直接优化节点嵌入的方法，如DeepWalk、Node2Vec等。这些方法在一个特定的图上学习节点的嵌入向量，并且假设训练时使用的所有节点在预测时都是可见的。这些方法的共同点是它们通常需要对图中所有节点进行处理，并且一次学习所有节点的嵌入。因此，它们通常不具备归纳能力，即难以直接应对图中新增节点的情况，除非重新进行嵌入的学习过程。 对于GCN是哪种范式一下就明了了，GCN通过学习一个卷积过程，其中节点的特征信息是通过其邻居的特征进行聚合更新的。这个过程允许GCN处理未见过的节点，所以是归纳式。但GCN的归纳能力取决于它的应用方式和具体的训练设置。例如，如果GCN在一个特定的图结构上训练，并且仅用于相同结构的图，则其行为更倾向于转导式学习。但如果其训练过程涵盖了多种图结构，并且模型设计上允许它适应不同的图，那么它就显示出强大的归纳能力。（多图案例是蛋白质结构预测） GCLs通常在无监督或自监督的设置下用于学习图或节点的表示。这种方法通过最大化正样本对的相似性和最小化负样本对的相似性来学习有效的嵌入。图对比学习的关键优势在于它不依赖于标签数据，而是通过数据本身的结构和内容来学习表示。这个也是归纳式的。 GraphSAGE（Graph Sample and Aggregation）是一种归纳式图神经网络模型，它设计用来生成节点的嵌入，即使是在训练过程中未见过的节点（这一点很好保证：1训练时隐藏节点2邻居采样）。这种归纳能力源于其独特的聚合机制，该机制能够从节点的局部邻域信息中学习如何有效地生成嵌入。\n算法流程：\nGraphSAGE实现归纳式学习的关键方面：\n1. 局部邻域聚合 GraphSAGE的核心思想是使用聚合函数来合成一个节点的邻居信息，形成该节点的嵌入。这意味着生成节点嵌入不依赖于整个图的结构，而是依赖于每个节点的局部邻域。具体聚合函数可以是简单的均值聚合、池化聚合或LSTM聚合等。通过这种方式，模型可以灵活地应对图中的新节点，因为它只需要新节点的局部信息就能计算其嵌入。\n2. 邻居采样 由于实际图往往非常大，直接使用所有邻居的信息进行聚合计算是不现实的。GraphSAGE引入了邻居采样策略，即从每个节点的邻居中随机选择一个固定大小的子集，然后只使用这些采样邻居的信息来进行聚合。这不仅减少了计算负担，而且通过随机性增加了模型的泛化能力。\n3. 多层聚合 GraphSAGE通常使用多层聚合结构，每层都对应一个聚合步骤。每个节点在每一层聚合其邻居的信息，然后将聚合结果传递到下一层。这样，更高层的聚合可以间接包含更远邻居的信息。这种分层的聚合方式允许模型捕获从近邻到远邻的结构信息。\nTensorFlow实现：\n#!/usr/bin/env python # -*- coding:utf-8 -*- \u0026#34;\u0026#34;\u0026#34; 参考文献: [1] Hamilton W, Ying Z, Leskovec J. Inductive representation learning on large graphs[C]//Advances in Neural Information Processing Systems. 2017: 1024-1034. (https://papers.nips.cc/paper/6703-inductive-representation-learning-on-large-graphs.pdf) \u0026#34;\u0026#34;\u0026#34; import numpy as np import tensorflow as tf from tensorflow.",
+  "keywords": [
+    "GNNs"
+  ],
+  "articleBody": "GraphSAGE Inductive Representation Learning on Large Graphs\n两点强调：\nInductive Large Graphs 首先明确一个概念：在推荐系统中Graph embedding采用直推式或称推导式（transductive）和归纳式（Inductive）两种，区别就是对于一个新加入的节点，模型是否能够在不重新学习之前预训练好的embedding的情况下，对这个新加入节点的特征进行嵌入表征。\n这个概念比较老，面试时不要被迷惑。\n直推式 基于矩阵分解、DeepWalk、Node2Vec 归纳式 GraphSAGE、 GCN、 GAT、 GCLs 直推式这类方法通常包括直接优化节点嵌入的方法，如DeepWalk、Node2Vec等。这些方法在一个特定的图上学习节点的嵌入向量，并且假设训练时使用的所有节点在预测时都是可见的。这些方法的共同点是它们通常需要对图中所有节点进行处理，并且一次学习所有节点的嵌入。因此，它们通常不具备归纳能力，即难以直接应对图中新增节点的情况，除非重新进行嵌入的学习过程。 对于GCN是哪种范式一下就明了了，GCN通过学习一个卷积过程，其中节点的特征信息是通过其邻居的特征进行聚合更新的。这个过程允许GCN处理未见过的节点，所以是归纳式。但GCN的归纳能力取决于它的应用方式和具体的训练设置。例如，如果GCN在一个特定的图结构上训练，并且仅用于相同结构的图，则其行为更倾向于转导式学习。但如果其训练过程涵盖了多种图结构，并且模型设计上允许它适应不同的图，那么它就显示出强大的归纳能力。（多图案例是蛋白质结构预测） GCLs通常在无监督或自监督的设置下用于学习图或节点的表示。这种方法通过最大化正样本对的相似性和最小化负样本对的相似性来学习有效的嵌入。图对比学习的关键优势在于它不依赖于标签数据，而是通过数据本身的结构和内容来学习表示。这个也是归纳式的。 GraphSAGE（Graph Sample and Aggregation）是一种归纳式图神经网络模型，它设计用来生成节点的嵌入，即使是在训练过程中未见过的节点（这一点很好保证：1训练时隐藏节点2邻居采样）。这种归纳能力源于其独特的聚合机制，该机制能够从节点的局部邻域信息中学习如何有效地生成嵌入。\n算法流程：\nGraphSAGE实现归纳式学习的关键方面：\n1. 局部邻域聚合 GraphSAGE的核心思想是使用聚合函数来合成一个节点的邻居信息，形成该节点的嵌入。这意味着生成节点嵌入不依赖于整个图的结构，而是依赖于每个节点的局部邻域。具体聚合函数可以是简单的均值聚合、池化聚合或LSTM聚合等。通过这种方式，模型可以灵活地应对图中的新节点，因为它只需要新节点的局部信息就能计算其嵌入。\n2. 邻居采样 由于实际图往往非常大，直接使用所有邻居的信息进行聚合计算是不现实的。GraphSAGE引入了邻居采样策略，即从每个节点的邻居中随机选择一个固定大小的子集，然后只使用这些采样邻居的信息来进行聚合。这不仅减少了计算负担，而且通过随机性增加了模型的泛化能力。\n3. 多层聚合 GraphSAGE通常使用多层聚合结构，每层都对应一个聚合步骤。每个节点在每一层聚合其邻居的信息，然后将聚合结果传递到下一层。这样，更高层的聚合可以间接包含更远邻居的信息。这种分层的聚合方式允许模型捕获从近邻到远邻的结构信息。\nTensorFlow实现：\n#!/usr/bin/env python # -*- coding:utf-8 -*- \"\"\" 参考文献: [1] Hamilton W, Ying Z, Leskovec J. Inductive representation learning on large graphs[C]//Advances in Neural Information Processing Systems. 2017: 1024-1034. (https://papers.nips.cc/paper/6703-inductive-representation-learning-on-large-graphs.pdf) \"\"\" import numpy as np import tensorflow as tf from tensorflow.python.keras.initializers import glorot_uniform, Zeros from tensorflow.python.keras.layers import Input, Dense, Dropout, Layer from tensorflow.python.keras.models import Model from tensorflow.python.keras.regularizers import l2 class MeanAggregator(Layer): # 平均聚合层，用于GraphSAGE中的邻居信息聚合 def __init__(self, units, input_dim, neigh_max, concat=True, dropout_rate=0.0, activation=tf.nn.relu, l2_reg=0, use_bias=False, seed=1024, **kwargs): super(MeanAggregator, self).__init__() self.units = units # 输出单元数 self.neigh_max = neigh_max # 最大邻居数 self.concat = concat # 是否拼接 self.dropout_rate = dropout_rate # Dropout比率 self.l2_reg = l2_reg # L2正则化系数 self.use_bias = use_bias # 是否使用偏置 self.activation = activation # 激活函数 self.seed = seed # 随机种子 self.input_dim = input_dim # 输入特征维度 def build(self, input_shapes): # 构建层的权重和偏置 self.neigh_weights = self.add_weight(shape=(self.input_dim, self.units), initializer=glorot_uniform(seed=self.seed), regularizer=l2(self.l2_reg), name=\"neigh_weights\") if self.use_bias: self.bias = self.add_weight(shape=(self.units,), initializer=Zeros(), name='bias_weight') self.dropout = Dropout(self.dropout_rate) self.built = True def call(self, inputs, training=None): # 层的前向传播 features, node, neighbours = inputs node_feat = tf.nn.embedding_lookup(features, node) # 获取节点特征 neigh_feat = tf.nn.embedding_lookup(features, neighbours) # 获取邻居特征 # 应用dropout node_feat = self.dropout(node_feat, training=training) neigh_feat = self.dropout(neigh_feat, training=training) # 拼接并计算平均值 concat_feat = tf.concat([neigh_feat, node_feat], axis=1) try: concat_mean = tf.reduce_mean(concat_feat, axis=1, keep_dims=False) except TypeError: concat_mean = tf.reduce_mean(concat_feat, axis=1, keepdims=False) # 使用权重计算输出，并可选加偏置 output = tf.matmul(concat_mean, self.neigh_weights) if self.use_bias: output += self.bias if self.activation: output = self.activation(output) return output def get_config(self): # 返回层的配置 config = {'units': self.units, 'concat': self.concat, 'seed': self.seed} base_config = super(MeanAggregator, self).get_config() return dict(list(base_config.items()) + list(config.items())) class PoolingAggregator(Layer): # 池化聚合层，支持平均池化或最大池化 def __init__(self, units, input_dim, neigh_max, aggregator='meanpooling', concat=True, dropout_rate=0.0, activation=tf.nn.relu, l2_reg=0, use_bias=False, seed=1024): super(PoolingAggregator, self).__init__() self.output_dim = units this.input_dim = input_dim self.concat = concat self.pooling = aggregator this.dropout_rate = dropout_rate this.l2_reg = l2_reg this.use_bias = use_bias this.activation = activation this.neigh_max = neigh_max this.seed = seed def build(self, input_shapes): # 定义层的权重和内部的密集层 self.dense_layers = [Dense(self.input_dim, activation='relu', use_bias=True, kernel_regularizer=l2(self.l2_reg))] self.neigh_weights = self.add_weight(shape=(self.input_dim * 2, this.output_dim), initializer=glorot_uniform(seed=self.seed), regularizer=l2(this.l2_reg), name=\"neigh_weights\") if self.use_bias: this.bias = self.add_weight(shape=(this.output_dim,), initializer=Zeros(), name='bias_weight') this.built = True def call(self, inputs, mask=None): # 层的前向传播 features, node, neighbours = inputs node_feat = tf.nn.embedding_lookup(features, node) # 获取节点特征 neigh_feat = tf.nn.embedding_lookup(features, neighbours) # 获取邻居特征 # 重塑并应用密集层到邻居特征 dims = tf.shape(neigh_feat) batch_size = dims[0] num_neighbors = dims[1] h_reshaped = tf.reshape(neigh_feat, (batch_size * num_neighbors, this.input_dim)) for l in this.dense_layers: h_reshaped = l(h_reshaped) neigh_feat = tf.reshape(h_reshaped, (batch_size, num_neighbors, int(h_reshaped.shape[-1]))) # 根据指定的聚合类型应用池化 if this.pooling == \"meanpooling\": neigh_feat = tf.reduce_mean(neigh_feat, axis=1, keep_dims=False) else: neigh_feat = tf.reduce_max(neigh_feat, axis=1) # 拼接节点和邻居特征，计算输出 output = tf.concat([tf.squeeze(node_feat, axis=1), neigh_feat], axis=-1) output = tf.matmul(output, this.neigh_weights) if this.use_bias: output += this.bias if this.activation: output = this.activation(output) return output def get_config(self): # 返回层的配置 config = {'output_dim': this.output_dim, 'concat': this.concat} base_config = super(PoolingAggregator, this).get_config() return dict(list(base_config.items()) + list(config.items())) def GraphSAGE(feature_dim, neighbor_num, n_hidden, n_classes, use_bias=True, activation=tf.nn.relu, aggregator_type='mean', dropout_rate=0.0, l2_reg=0): # 构建GraphSAGE模型 features = Input(shape=(feature_dim,)) node_input = Input(shape=(1,), dtype=tf.int32) neighbor_input = [Input(shape=(l,), dtype=tf.int32) for l in neighbor_num] # 根据指定的聚合类型选择聚合函数 if aggregator_type == 'mean': aggregator = MeanAggregator else: aggregator = PoolingAggregator h = features # 构建聚合层的多层结构 for i in range(0, len(neighbor_num)): if i \u003e 0: feature_dim = n_hidden if i == len(neighbor_num) - 1: activation = tf.nn.softmax n_hidden = n_classes h = aggregator(units=n_hidden, input_dim=feature_dim, activation=activation, l2_reg=l2_reg, use_bias=use_bias, dropout_rate=dropout_rate, neigh_max=neighbor_num[i], aggregator=aggregator_type)( [h, node_input, neighbor_input[i]]) output = h input_list = [features, node_input] + neighbor_input model = Model(input_list, outputs=output) return model def sample_neighs(G, nodes, sample_num=None, self_loop=False, shuffle=True): # 为节点抽样邻居 _sample = np.random.choice neighs = [list(G[int(node)]) for node in nodes] # 获取每个节点的邻居 if sample_num: if self_loop: sample_num -= 1 # 如果包含自环，则调整抽样数目 samp_neighs = [ list(_sample(neigh, sample_num, replace=False)) if len(neigh) \u003e= sample_num else list( _sample(neigh, sample_num, replace=True)) for neigh in neighs] # 抽样邻居 if self_loop: samp_neighs = [samp_neigh + list([nodes[i]]) for i, samp_neigh in enumerate(samp_neighs)] # 包含自身 if shuffle: samp_neighs = [list(np.random.permutation(x)) for x in samp_neighs] # 可选的邻居打乱 else: samp_neighs = neighs # 如果未指定抽样数目，使用所有邻居 return np.asarray(samp_neighs, dtype=np.float32), np.asarray(list(map(len, samp_neighs))) # 返回抽样邻居和它们的数目 ",
+  "wordCount" : "652",
+  "inLanguage": "en",
+  "datePublished": "2024-05-11T15:18:34+08:00",
+  "dateModified": "2024-05-11T15:18:34+08:00",
+  "author":[{
+    "@type": "Person",
+    "name": "Sanmu"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://welldonesanmu.github.io/posts/graphsage/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Sanmu",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://welldonesanmu.github.io/img/avatars.jpg"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://welldonesanmu.github.io" accesskey="h" title="Home (Alt + H)">
+                <img src="https://welldonesanmu.github.io/img/avatars.jpg" alt="" aria-label="logo"
+                    height="35">Home</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://welldonesanmu.github.io/archives/" title="Archives">
+                    <span>Archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://welldonesanmu.github.io/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://welldonesanmu.github.io/about/" title="About">
+                    <span>About</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="https://welldonesanmu.github.io">Home</a>&nbsp;»&nbsp;<a href="https://welldonesanmu.github.io/posts/">Posts</a></div>
+    <h1 class="post-title">
+      GraphSAGE
+    </h1>
+    <div class="post-meta"><span title='2024-05-11 15:18:34 +0800 CST'>May 11, 2024</span>&nbsp;·&nbsp;Sanmu
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="graphsage">GraphSAGE<a hidden class="anchor" aria-hidden="true" href="#graphsage">#</a></h1>
+<p>Inductive Representation Learning on Large Graphs</p>
+<p>两点强调：</p>
+<ul>
+<li>Inductive</li>
+<li>Large Graphs</li>
+</ul>
+<p>首先明确一个概念：在推荐系统中Graph embedding采用直推式或称推导式（<strong>transductive</strong>）和归纳式（<strong>Inductive</strong>）两种，区别就是对于一个新加入的节点，模型是否能够在不重新学习之前预训练好的embedding的情况下，对这个新加入节点的特征进行嵌入表征。</p>
+<p>这个概念比较老，面试时不要被迷惑。</p>
+<table>
+<thead>
+<tr>
+<th><strong>直推式</strong></th>
+<th><strong>基于矩阵分解、DeepWalk、Node2Vec</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>归纳式</strong></td>
+<td><strong>GraphSAGE、 GCN、 GAT、 GCLs</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>直推式这类方法通常包括直接优化节点嵌入的方法，如DeepWalk、Node2Vec等。这些方法在一个特定的图上学习节点的嵌入向量，并且假设训练时使用的所有节点在预测时都是可见的。这些方法的共同点是它们通常需要对图中所有节点进行处理，并且一次学习所有节点的嵌入。因此，它们通常不具备归纳能力，即难以直接应对图中新增节点的情况，除非重新进行嵌入的学习过程。</li>
+<li>对于GCN是哪种范式一下就明了了，GCN通过学习一个卷积过程，其中节点的特征信息是通过其邻居的特征进行聚合更新的。这个过程允许GCN处理未见过的节点，所以是归纳式。但GCN的归纳能力取决于它的应用方式和具体的训练设置。例如，如果GCN在一个特定的图结构上训练，并且仅用于相同结构的图，则其行为更倾向于转导式学习。但如果其训练过程涵盖了多种图结构，并且模型设计上允许它适应不同的图，那么它就显示出强大的归纳能力。（<strong>多图案例是蛋白质结构预测</strong>）</li>
+<li>GCLs通常在无监督或自监督的设置下用于学习图或节点的表示。这种方法通过最大化正样本对的相似性和最小化负样本对的相似性来学习有效的嵌入。图对比学习的关键优势在于它不依赖于标签数据，而是通过数据本身的结构和内容来学习表示。这个也是归纳式的。</li>
+</ul>
+<hr>
+<p><strong>GraphSAGE</strong>（Graph Sample and Aggregation）是一种归纳式图神经网络模型，它设计用来生成节点的嵌入，<strong>即使是在训练过程中未见过的节点</strong>（这一点很好保证：1训练时隐藏节点2邻居采样）。这种归纳能力源于其独特的聚合机制，该机制能够从节点的局部邻域信息中学习如何有效地生成嵌入。</p>
+<p><img loading="lazy" src="https://welldonesanmu2.github.io/picx-images-hosting/20240511/image.39kzyhot2c.webp" alt="image"  />
+</p>
+<p>算法流程：</p>
+<p><img loading="lazy" src="https://welldonesanmu2.github.io/picx-images-hosting/20240511/image.7p3f3rhtsv.webp" alt="image"  />
+</p>
+<p>GraphSAGE实现归纳式学习的关键方面：</p>
+<h3 id="1-局部邻域聚合">1. <strong>局部邻域聚合</strong><a hidden class="anchor" aria-hidden="true" href="#1-局部邻域聚合">#</a></h3>
+<p>GraphSAGE的核心思想是使用聚合函数来合成一个节点的邻居信息，形成该节点的嵌入。这意味着生成节点嵌入不依赖于整个图的结构，而是依赖于每个节点的局部邻域。具体聚合函数可以是简单的均值聚合、池化聚合或LSTM聚合等。通过这种方式，模型可以灵活地应对图中的新节点，因为它只需要新节点的局部信息就能计算其嵌入。</p>
+<p><img loading="lazy" src="https://welldonesanmu2.github.io/picx-images-hosting/20240511/image.3rb1n2m3d8.webp" alt="image"  />
+</p>
+<p><img loading="lazy" src="https://welldonesanmu2.github.io/picx-images-hosting/20240511/image.5j40hzmpae.webp" alt="image"  />
+</p>
+<h3 id="2-邻居采样">2. <strong>邻居采样</strong><a hidden class="anchor" aria-hidden="true" href="#2-邻居采样">#</a></h3>
+<p>由于实际图往往非常大，直接使用所有邻居的信息进行聚合计算是不现实的。GraphSAGE引入了邻居采样策略，即从每个节点的邻居中随机选择一个固定大小的子集，然后只使用这些采样邻居的信息来进行聚合。这不仅减少了计算负担，而且通过随机性增加了模型的泛化能力。</p>
+<h3 id="3-多层聚合">3. <strong>多层聚合</strong><a hidden class="anchor" aria-hidden="true" href="#3-多层聚合">#</a></h3>
+<p>GraphSAGE通常使用多层聚合结构，每层都对应一个聚合步骤。每个节点在每一层聚合其邻居的信息，然后将聚合结果传递到下一层。这样，更高层的聚合可以间接包含更远邻居的信息。这种分层的聚合方式允许模型捕获从近邻到远邻的结构信息。</p>
+<hr>
+<p>TensorFlow实现：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="ch">#!/usr/bin/env python</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># -*- coding:utf-8 -*-</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s2">参考文献:
+</span></span></span><span class="line"><span class="cl"><span class="s2">    [1] Hamilton W, Ying Z, Leskovec J. Inductive representation learning on large graphs[C]//Advances in Neural Information Processing Systems. 2017: 1024-1034.
+</span></span></span><span class="line"><span class="cl"><span class="s2">    (https://papers.nips.cc/paper/6703-inductive-representation-learning-on-large-graphs.pdf)
+</span></span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">tensorflow.python.keras.initializers</span> <span class="kn">import</span> <span class="n">glorot_uniform</span><span class="p">,</span> <span class="n">Zeros</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">tensorflow.python.keras.layers</span> <span class="kn">import</span> <span class="n">Input</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Dropout</span><span class="p">,</span> <span class="n">Layer</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">tensorflow.python.keras.models</span> <span class="kn">import</span> <span class="n">Model</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">tensorflow.python.keras.regularizers</span> <span class="kn">import</span> <span class="n">l2</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">MeanAggregator</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># 平均聚合层，用于GraphSAGE中的邻居信息聚合</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">neigh_max</span><span class="p">,</span> <span class="n">concat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dropout_rate</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span> <span class="n">l2_reg</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                 <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">super</span><span class="p">(</span><span class="n">MeanAggregator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span>  <span class="c1"># 输出单元数</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">neigh_max</span> <span class="o">=</span> <span class="n">neigh_max</span>  <span class="c1"># 最大邻居数</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">concat</span> <span class="o">=</span> <span class="n">concat</span>  <span class="c1"># 是否拼接</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">dropout_rate</span> <span class="o">=</span> <span class="n">dropout_rate</span>  <span class="c1"># Dropout比率</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">l2_reg</span> <span class="o">=</span> <span class="n">l2_reg</span>  <span class="c1"># L2正则化系数</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">use_bias</span> <span class="o">=</span> <span class="n">use_bias</span>  <span class="c1"># 是否使用偏置</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">activation</span>  <span class="c1"># 激活函数</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>  <span class="c1"># 随机种子</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">=</span> <span class="n">input_dim</span>  <span class="c1"># 输入特征维度</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shapes</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 构建层的权重和偏置</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">neigh_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_weight</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">                                             <span class="n">initializer</span><span class="o">=</span><span class="n">glorot_uniform</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">                                             <span class="n">regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l2_reg</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">                                             <span class="n">name</span><span class="o">=</span><span class="s2">&#34;neigh_weights&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_bias</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_weight</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">,),</span> <span class="n">initializer</span><span class="o">=</span><span class="n">Zeros</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;bias_weight&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dropout_rate</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">built</span> <span class="o">=</span> <span class="kc">True</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 层的前向传播</span>
+</span></span><span class="line"><span class="cl">        <span class="n">features</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">neighbours</span> <span class="o">=</span> <span class="n">inputs</span>
+</span></span><span class="line"><span class="cl">        <span class="n">node_feat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>  <span class="c1"># 获取节点特征</span>
+</span></span><span class="line"><span class="cl">        <span class="n">neigh_feat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">neighbours</span><span class="p">)</span>  <span class="c1"># 获取邻居特征</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># 应用dropout</span>
+</span></span><span class="line"><span class="cl">        <span class="n">node_feat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">node_feat</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="n">training</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">neigh_feat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">neigh_feat</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="n">training</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># 拼接并计算平均值</span>
+</span></span><span class="line"><span class="cl">        <span class="n">concat_feat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">neigh_feat</span><span class="p">,</span> <span class="n">node_feat</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">try</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">concat_mean</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">concat_feat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keep_dims</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">concat_mean</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">concat_feat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># 使用权重计算输出，并可选加偏置</span>
+</span></span><span class="line"><span class="cl">        <span class="n">output</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">concat_mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">neigh_weights</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_bias</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">output</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">output</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 返回层的配置</span>
+</span></span><span class="line"><span class="cl">        <span class="n">config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">,</span> <span class="s1">&#39;concat&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">concat</span><span class="p">,</span> <span class="s1">&#39;seed&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="n">base_config</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">MeanAggregator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_config</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">base_config</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">PoolingAggregator</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># 池化聚合层，支持平均池化或最大池化</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">neigh_max</span><span class="p">,</span> <span class="n">aggregator</span><span class="o">=</span><span class="s1">&#39;meanpooling&#39;</span><span class="p">,</span> <span class="n">concat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                 <span class="n">dropout_rate</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span> <span class="n">l2_reg</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1024</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">super</span><span class="p">(</span><span class="n">PoolingAggregator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="n">units</span>
+</span></span><span class="line"><span class="cl">        <span class="n">this</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">=</span> <span class="n">input_dim</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">concat</span> <span class="o">=</span> <span class="n">concat</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">pooling</span> <span class="o">=</span> <span class="n">aggregator</span>
+</span></span><span class="line"><span class="cl">        <span class="n">this</span><span class="o">.</span><span class="n">dropout_rate</span> <span class="o">=</span> <span class="n">dropout_rate</span>
+</span></span><span class="line"><span class="cl">        <span class="n">this</span><span class="o">.</span><span class="n">l2_reg</span> <span class="o">=</span> <span class="n">l2_reg</span>
+</span></span><span class="line"><span class="cl">        <span class="n">this</span><span class="o">.</span><span class="n">use_bias</span> <span class="o">=</span> <span class="n">use_bias</span>
+</span></span><span class="line"><span class="cl">        <span class="n">this</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">activation</span>
+</span></span><span class="line"><span class="cl">        <span class="n">this</span><span class="o">.</span><span class="n">neigh_max</span> <span class="o">=</span> <span class="n">neigh_max</span>
+</span></span><span class="line"><span class="cl">        <span class="n">this</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shapes</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 定义层的权重和内部的密集层</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">dense_layers</span> <span class="o">=</span> <span class="p">[</span><span class="n">Dense</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">use_bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l2_reg</span><span class="p">))]</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">neigh_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_weight</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">this</span><span class="o">.</span><span class="n">output_dim</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">                                             <span class="n">initializer</span><span class="o">=</span><span class="n">glorot_uniform</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">                                             <span class="n">regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">this</span><span class="o">.</span><span class="n">l2_reg</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">                                             <span class="n">name</span><span class="o">=</span><span class="s2">&#34;neigh_weights&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_bias</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">this</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_weight</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">this</span><span class="o">.</span><span class="n">output_dim</span><span class="p">,),</span> <span class="n">initializer</span><span class="o">=</span><span class="n">Zeros</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;bias_weight&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">this</span><span class="o">.</span><span class="n">built</span> <span class="o">=</span> <span class="kc">True</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 层的前向传播</span>
+</span></span><span class="line"><span class="cl">        <span class="n">features</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">neighbours</span> <span class="o">=</span> <span class="n">inputs</span>
+</span></span><span class="line"><span class="cl">        <span class="n">node_feat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>  <span class="c1"># 获取节点特征</span>
+</span></span><span class="line"><span class="cl">        <span class="n">neigh_feat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">neighbours</span><span class="p">)</span>  <span class="c1"># 获取邻居特征</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># 重塑并应用密集层到邻居特征</span>
+</span></span><span class="line"><span class="cl">        <span class="n">dims</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">neigh_feat</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">        <span class="n">num_neighbors</span> <span class="o">=</span> <span class="n">dims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">        <span class="n">h_reshaped</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">neigh_feat</span><span class="p">,</span> <span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">num_neighbors</span><span class="p">,</span> <span class="n">this</span><span class="o">.</span><span class="n">input_dim</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">this</span><span class="o">.</span><span class="n">dense_layers</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">h_reshaped</span> <span class="o">=</span> <span class="n">l</span><span class="p">(</span><span class="n">h_reshaped</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">neigh_feat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">h_reshaped</span><span class="p">,</span> <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">num_neighbors</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">h_reshaped</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># 根据指定的聚合类型应用池化</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">this</span><span class="o">.</span><span class="n">pooling</span> <span class="o">==</span> <span class="s2">&#34;meanpooling&#34;</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">neigh_feat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">neigh_feat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keep_dims</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">neigh_feat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_max</span><span class="p">(</span><span class="n">neigh_feat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># 拼接节点和邻居特征，计算输出</span>
+</span></span><span class="line"><span class="cl">        <span class="n">output</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">tf</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">node_feat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">neigh_feat</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">output</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">this</span><span class="o">.</span><span class="n">neigh_weights</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">this</span><span class="o">.</span><span class="n">use_bias</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">output</span> <span class="o">+=</span> <span class="n">this</span><span class="o">.</span><span class="n">bias</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">this</span><span class="o">.</span><span class="n">activation</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">output</span> <span class="o">=</span> <span class="n">this</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">output</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 返回层的配置</span>
+</span></span><span class="line"><span class="cl">        <span class="n">config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;output_dim&#39;</span><span class="p">:</span> <span class="n">this</span><span class="o">.</span><span class="n">output_dim</span><span class="p">,</span> <span class="s1">&#39;concat&#39;</span><span class="p">:</span> <span class="n">this</span><span class="o">.</span><span class="n">concat</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="n">base_config</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">PoolingAggregator</span><span class="p">,</span> <span class="n">this</span><span class="p">)</span><span class="o">.</span><span class="n">get_config</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">base_config</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">GraphSAGE</span><span class="p">(</span><span class="n">feature_dim</span><span class="p">,</span> <span class="n">neighbor_num</span><span class="p">,</span> <span class="n">n_hidden</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">,</span> <span class="n">use_bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">              <span class="n">aggregator_type</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">dropout_rate</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">l2_reg</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># 构建GraphSAGE模型</span>
+</span></span><span class="line"><span class="cl">    <span class="n">features</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">feature_dim</span><span class="p">,))</span>
+</span></span><span class="line"><span class="cl">    <span class="n">node_input</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">neighbor_input</span> <span class="o">=</span> <span class="p">[</span><span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">l</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">neighbor_num</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># 根据指定的聚合类型选择聚合函数</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">aggregator_type</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">aggregator</span> <span class="o">=</span> <span class="n">MeanAggregator</span>
+</span></span><span class="line"><span class="cl">    <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">aggregator</span> <span class="o">=</span> <span class="n">PoolingAggregator</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">h</span> <span class="o">=</span> <span class="n">features</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># 构建聚合层的多层结构</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">neighbor_num</span><span class="p">)):</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">feature_dim</span> <span class="o">=</span> <span class="n">n_hidden</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">neighbor_num</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">activation</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span>
+</span></span><span class="line"><span class="cl">            <span class="n">n_hidden</span> <span class="o">=</span> <span class="n">n_classes</span>
+</span></span><span class="line"><span class="cl">        <span class="n">h</span> <span class="o">=</span> <span class="n">aggregator</span><span class="p">(</span><span class="n">units</span><span class="o">=</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">input_dim</span><span class="o">=</span><span class="n">feature_dim</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">,</span> <span class="n">l2_reg</span><span class="o">=</span><span class="n">l2_reg</span><span class="p">,</span> <span class="n">use_bias</span><span class="o">=</span><span class="n">use_bias</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                       <span class="n">dropout_rate</span><span class="o">=</span><span class="n">dropout_rate</span><span class="p">,</span> <span class="n">neigh_max</span><span class="o">=</span><span class="n">neighbor_num</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">aggregator</span><span class="o">=</span><span class="n">aggregator_type</span><span class="p">)(</span>
+</span></span><span class="line"><span class="cl">            <span class="p">[</span><span class="n">h</span><span class="p">,</span> <span class="n">node_input</span><span class="p">,</span> <span class="n">neighbor_input</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">output</span> <span class="o">=</span> <span class="n">h</span>
+</span></span><span class="line"><span class="cl">    <span class="n">input_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">features</span><span class="p">,</span> <span class="n">node_input</span><span class="p">]</span> <span class="o">+</span> <span class="n">neighbor_input</span>
+</span></span><span class="line"><span class="cl">    <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">input_list</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="n">output</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">model</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">sample_neighs</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">sample_num</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">self_loop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>  <span class="c1"># 为节点抽样邻居</span>
+</span></span><span class="line"><span class="cl">    <span class="n">_sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span>
+</span></span><span class="line"><span class="cl">    <span class="n">neighs</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">G</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">node</span><span class="p">)])</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">]</span>  <span class="c1"># 获取每个节点的邻居</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">sample_num</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">self_loop</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sample_num</span> <span class="o">-=</span> <span class="mi">1</span>  <span class="c1"># 如果包含自环，则调整抽样数目</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">samp_neighs</span> <span class="o">=</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">            <span class="nb">list</span><span class="p">(</span><span class="n">_sample</span><span class="p">(</span><span class="n">neigh</span><span class="p">,</span> <span class="n">sample_num</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">neigh</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">sample_num</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">                <span class="n">_sample</span><span class="p">(</span><span class="n">neigh</span><span class="p">,</span> <span class="n">sample_num</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span> <span class="k">for</span> <span class="n">neigh</span> <span class="ow">in</span> <span class="n">neighs</span><span class="p">]</span>  <span class="c1"># 抽样邻居</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">self_loop</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">samp_neighs</span> <span class="o">=</span> <span class="p">[</span><span class="n">samp_neigh</span> <span class="o">+</span> <span class="nb">list</span><span class="p">([</span><span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">samp_neigh</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">samp_neighs</span><span class="p">)]</span>  <span class="c1"># 包含自身</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">samp_neighs</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">samp_neighs</span><span class="p">]</span>  <span class="c1"># 可选的邻居打乱</span>
+</span></span><span class="line"><span class="cl">    <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">samp_neighs</span> <span class="o">=</span> <span class="n">neighs</span>  <span class="c1"># 如果未指定抽样数目，使用所有邻居</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">samp_neighs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">samp_neighs</span><span class="p">)))</span>  <span class="c1"># 返回抽样邻居和它们的数目</span>
+</span></span></code></pre></div>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://welldonesanmu.github.io/tags/gnns/">GNNs</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="https://welldonesanmu.github.io/posts/%E5%AD%97%E8%8A%82%E4%B8%80%E9%9D%A2/">
+    <span class="title">Next »</span>
+    <br>
+    <span>字节一面</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2024 <a href="https://welldonesanmu.github.io">Sanmu</a></span>
+
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

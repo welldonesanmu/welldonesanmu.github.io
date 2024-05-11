@@ -10,14 +10,25 @@
       <link>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Fri, 10 May 2024 22:43:42 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 11 May 2024 15:18:34 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>PicTest</title>
-      <link>https://welldonesanmu.github.io/posts/pictest/</link>
-      <pubDate>Fri, 10 May 2024 22:43:42 +0800</pubDate>
+      <title>GraphSAGE</title>
+      <link>https://welldonesanmu.github.io/posts/graphsage/</link>
+      <pubDate>Sat, 11 May 2024 15:18:34 +0800</pubDate>
       
-      <guid>https://welldonesanmu.github.io/posts/pictest/</guid>
-      <description>New Pic-Bed Testing </description>
+      <guid>https://welldonesanmu.github.io/posts/graphsage/</guid>
+      <description>GraphSAGE Inductive Representation Learning on Large Graphs
+两点强调：
+Inductive Large Graphs 首先明确一个概念：在推荐系统中Graph embedding采用直推式或称推导式（transductive）和归纳式（Inductive）两种，区别就是对于一个新加入的节点，模型是否能够在不重新学习之前预训练好的embedding的情况下，对这个新加入节点的特征进行嵌入表征。
+这个概念比较老，面试时不要被迷惑。
+直推式 基于矩阵分解、DeepWalk、Node2Vec 归纳式 GraphSAGE、 GCN、 GAT、 GCLs 直推式这类方法通常包括直接优化节点嵌入的方法，如DeepWalk、Node2Vec等。这些方法在一个特定的图上学习节点的嵌入向量，并且假设训练时使用的所有节点在预测时都是可见的。这些方法的共同点是它们通常需要对图中所有节点进行处理，并且一次学习所有节点的嵌入。因此，它们通常不具备归纳能力，即难以直接应对图中新增节点的情况，除非重新进行嵌入的学习过程。 对于GCN是哪种范式一下就明了了，GCN通过学习一个卷积过程，其中节点的特征信息是通过其邻居的特征进行聚合更新的。这个过程允许GCN处理未见过的节点，所以是归纳式。但GCN的归纳能力取决于它的应用方式和具体的训练设置。例如，如果GCN在一个特定的图结构上训练，并且仅用于相同结构的图，则其行为更倾向于转导式学习。但如果其训练过程涵盖了多种图结构，并且模型设计上允许它适应不同的图，那么它就显示出强大的归纳能力。（多图案例是蛋白质结构预测） GCLs通常在无监督或自监督的设置下用于学习图或节点的表示。这种方法通过最大化正样本对的相似性和最小化负样本对的相似性来学习有效的嵌入。图对比学习的关键优势在于它不依赖于标签数据，而是通过数据本身的结构和内容来学习表示。这个也是归纳式的。 GraphSAGE（Graph Sample and Aggregation）是一种归纳式图神经网络模型，它设计用来生成节点的嵌入，即使是在训练过程中未见过的节点（这一点很好保证：1训练时隐藏节点2邻居采样）。这种归纳能力源于其独特的聚合机制，该机制能够从节点的局部邻域信息中学习如何有效地生成嵌入。
+算法流程：
+GraphSAGE实现归纳式学习的关键方面：
+1. 局部邻域聚合 GraphSAGE的核心思想是使用聚合函数来合成一个节点的邻居信息，形成该节点的嵌入。这意味着生成节点嵌入不依赖于整个图的结构，而是依赖于每个节点的局部邻域。具体聚合函数可以是简单的均值聚合、池化聚合或LSTM聚合等。通过这种方式，模型可以灵活地应对图中的新节点，因为它只需要新节点的局部信息就能计算其嵌入。
+2. 邻居采样 由于实际图往往非常大，直接使用所有邻居的信息进行聚合计算是不现实的。GraphSAGE引入了邻居采样策略，即从每个节点的邻居中随机选择一个固定大小的子集，然后只使用这些采样邻居的信息来进行聚合。这不仅减少了计算负担，而且通过随机性增加了模型的泛化能力。
+3. 多层聚合 GraphSAGE通常使用多层聚合结构，每层都对应一个聚合步骤。每个节点在每一层聚合其邻居的信息，然后将聚合结果传递到下一层。这样，更高层的聚合可以间接包含更远邻居的信息。这种分层的聚合方式允许模型捕获从近邻到远邻的结构信息。
+TensorFlow实现：
+#!/usr/bin/env python # -*- coding:utf-8 -*- &amp;#34;&amp;#34;&amp;#34; 参考文献: [1] Hamilton W, Ying Z, Leskovec J. Inductive representation learning on large graphs[C]//Advances in Neural Information Processing Systems. 2017: 1024-1034. (https://papers.nips.cc/paper/6703-inductive-representation-learning-on-large-graphs.pdf) &amp;#34;&amp;#34;&amp;#34; import numpy as np import tensorflow as tf from tensorflow.</description>
     </item>
     
     <item>
@@ -33,22 +44,8 @@
 部门实现推荐系统需要哪些技术栈？答：自研系统，服务端使用C++，模型搭建使用TensorFlow。 模型怎么上线耦合？答：算法工程师不管这个，有部门专门负责。 无Hadoop、Spark，all in算法实现
 项目称之为练手
 自我评价：C
-Timeline：5.7&amp;ndash;5.11（等挂）</description>
-    </item>
-    
-    <item>
-      <title>Deep Learning Trick</title>
-      <link>https://welldonesanmu.github.io/posts/deep-learning-trick/</link>
-      <pubDate>Wed, 19 Apr 2023 20:35:40 +0800</pubDate>
-      
-      <guid>https://welldonesanmu.github.io/posts/deep-learning-trick/</guid>
-      <description>Trick Epoch：1个epoch等于使用训练集中的全部样本训练一次，通俗的讲几次epoch就是整个数据集被轮几次。
-Batch Size：全部数据是分批来训练的，批的大小称为Batch Size。
-iteration：1个iteration等于使用batchsize个样本训练一次，也就是说训练一批的样本，称为一次迭代。
-比如训练集有500个样本，batchsize = 10 ，那么训练完整个样本集：iteration=50，epoch=1。
-batch: 深度学习每一次参数的更新所需要损失函数并不是由一个数据获得的，而是由一组数据加权得到的，这一组数据的数量就是batchsize。
-batchsize最大是样本总数N，此时就是Full batch learning；最小是1，即每次只训练一个样本，这就是在线学习（Online Learning）。当我们分批学习时，每次使用过全部训练数据完成一次Forword运算以及一次BP运算，成为完成了一次epoch。
-有17种trick可以有效缩短运行时间：</description>
+Timeline：5.7&amp;ndash;5.10（等挂）
+更新Timeline：5.11（挂同时被捞）</description>
     </item>
     
     <item>
@@ -75,15 +72,6 @@ batchsize最大是样本总数N，此时就是Full batch learning；最小是1�
 是你吗？
 还是自己吗？
 4-11于深夜。</description>
-    </item>
-    
-    <item>
-      <title>Picture</title>
-      <link>https://welldonesanmu.github.io/posts/picture/</link>
-      <pubDate>Tue, 11 Apr 2023 10:36:40 +0800</pubDate>
-      
-      <guid>https://welldonesanmu.github.io/posts/picture/</guid>
-      <description>This is the instruction about picture embed. </description>
     </item>
     
     <item>
