@@ -11,5 +11,5 @@ tags:
 
 # New Pic-Bed Testing
 
-![image](https://welldonesanmu.github.io/picx-images-hosting/image.969k4h7pwh.webp)
+![image](https://welldonesanmu2.github.io/picx-images-hosting/20240511/image.101zelcfbo.webp)
 
