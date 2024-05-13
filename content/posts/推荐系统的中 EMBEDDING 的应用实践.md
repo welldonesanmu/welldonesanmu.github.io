@@ -9,6 +9,10 @@ tags:
   - Graph embedding            
 ---
 
-Word2Vec -- Item2Vec -- Graph Embedding
+# Word2Vec -- Item2Vec -- Graph Embedding
+
+## Word2Vec
+
+![扫描文稿_page-0001](https://welldonesanmu2.github.io/picx-images-hosting/20240513/扫描文稿_page-0001.32hs5yxpgi.webp)
 
 [推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)](https://lumingdong.cn/application-practice-of-embedding-in-recommendation-system.html)
