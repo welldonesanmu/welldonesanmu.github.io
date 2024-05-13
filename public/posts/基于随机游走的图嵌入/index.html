@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>基于随机游走的图嵌入 | Sanmu</title>
+<meta name="keywords" content="Graph embedding">
+<meta name="description" content="Word2Vec Word2Vec 是一种流行的词嵌入（word embedding）技术，由Google的研究团队在2013年推出。它能够将词汇从高维空间（通常是词汇表的大小）映射到一个低维、连续的向量空间中。这些向量捕捉了词汇之间的语义和语法关系，使得在向量空间中语义上相近的词汇在几何上也相近。
+Word2Vec的两种模型架构： CBOW（Continuous Bag of Words）：
+CBOW模型预测目标词汇（中心词）基于其上下文（周围词）。具体来说，它取一个词的上下文（多个词），将这些词的向量平均，然后用这个平均后的结果来预测中心词。这个模型更适合小型数据集。 Skip-gram：
+与CBOW相反，Skip-gram模型用一个词来预测它的上下文。这意味着模型以中心词的形式输入，然后预测周围的词汇。Skip-gram模型在大型数据集上表现更好，特别是那些包含大量罕见词的数据集。 训练方法： Word2Vec模型通常使用一个叫做**负采样（Negative Sampling）**的技术来提高训练速度和改善低频词的表示。当词汇表很大时，标准的softmax多分类器计算代价非常高。通过引入负采样，可以显著减少训练过程中的计算负担，从而加快模型训练速度并改善对低频词的表示。
+在Word2Vec的Skip-gram模型中，原始目标是最大化中心词和上下文词对的对数概率之和（让生成的上下文词的条件概率概率相乘最大）。使用标准的softmax函数来计算这些概率时，需要对词汇表中的每个词进行评分，这在大词汇表上是不切实际的。负采样通过将多分类问题简化为多个二分类问题来解决这个问题。
+负采样的工作方式 选择正样本和负样本： 对于每一个训练样本（中心词和一个正上下文词的组合），除了正样本之外，还随机选择K个不是上下文的词作为负样本。这些负样本被假定为与中心词无关的词。 构建二分类问题： 对于每个正样本，目标是使模型预测的概率尽可能地接近1。 对于每个负样本，目标是使模型预测的概率尽可能地接近0。 更新词向量： 使用梯度下降或其他优化算法来更新词向量，以最小化预测概率和目标概率之间的误差。 Word2Vec模型的目标函数关键在于通过学习词向量以最大化特定的概率函数，这个概率函数与单词的上下文有关。根据Word2Vec的两种主要实现——CBOW（Continuous Bag of Words）和Skip-gram——目标函数略有不同。
+Skip-gram模型 Skip-gram模型的核心目标是给定一个特定的中心词，预测其周围的上下文词。假设给定一个词序列 ( w_1, w_2, &hellip;, w_T )，模型的目标是最大化整个语料库中的平均对数概率：
+$$ \frac{1}{T} \sum_{t=1}^{T} \sum_{-c \leq j \leq c, j \neq 0} \log p(w_{t&#43;j} | w_t) $$ 这里，( c ) 是上下文窗口大小，( T ) 是语料中的总词数，( p(w_{t&#43;j} | w_t) ) 是在给定中心词 ( w_t ) 的情况下，预测上下文词 ( w_{t&#43;j} ) 的概率。">
+<meta name="author" content="Sanmu">
+<link rel="canonical" href="https://welldonesanmu.github.io/posts/%E5%9F%BA%E4%BA%8E%E9%9A%8F%E6%9C%BA%E6%B8%B8%E8%B5%B0%E7%9A%84%E5%9B%BE%E5%B5%8C%E5%85%A5/">
+<meta name="google-site-verification" content="XYZabc">
+<meta name="yandex-verification" content="XYZabc">
+<meta name="msvalidate.01" content="XYZabc">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.76360485988b2c36106a3ffacc6d884d6bd71cabfcc81ca9a4964617d251b660.css" integrity="sha256-djYEhZiLLDYQaj/6zG2ITWvXHKv8yByppJZGF9JRtmA=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.f413e19d0714851f6474e7ee9632408e58ac146fbdbe62747134bea2fa3415e0.js" integrity="sha256-9BPhnQcUhR9kdOfuljJAjlisFG&#43;9vmJ0cTS&#43;ovo0FeA="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<link rel="icon" type="image/png" sizes="16x16" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<link rel="icon" type="image/png" sizes="32x32" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<link rel="apple-touch-icon" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<link rel="mask-icon" href="https://welldonesanmu.github.io/img/avatars.jpg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" integrity="sha384-MlJdn/WNKDGXveldHDdyRP1R4CTHr3FeuDNfhsLPYrq2t0UBkUdK2jyTnXPEK1NQ" crossorigin="anonymous">
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js" integrity="sha384-VQ8d8WVFw0yHhCk5E8I86oOhv48xLpnDZx5T9GogA/Y84DcCKWXDmSDfn13bzFZY" crossorigin="anonymous"></script>
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/auto-render.min.js" integrity="sha384-+XBljXPPiv+OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
+
+>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false}
+        ]
+    });
+});
+</script>
+<meta property="og:title" content="基于随机游走的图嵌入" />
+<meta property="og:description" content="Word2Vec Word2Vec 是一种流行的词嵌入（word embedding）技术，由Google的研究团队在2013年推出。它能够将词汇从高维空间（通常是词汇表的大小）映射到一个低维、连续的向量空间中。这些向量捕捉了词汇之间的语义和语法关系，使得在向量空间中语义上相近的词汇在几何上也相近。
+Word2Vec的两种模型架构： CBOW（Continuous Bag of Words）：
+CBOW模型预测目标词汇（中心词）基于其上下文（周围词）。具体来说，它取一个词的上下文（多个词），将这些词的向量平均，然后用这个平均后的结果来预测中心词。这个模型更适合小型数据集。 Skip-gram：
+与CBOW相反，Skip-gram模型用一个词来预测它的上下文。这意味着模型以中心词的形式输入，然后预测周围的词汇。Skip-gram模型在大型数据集上表现更好，特别是那些包含大量罕见词的数据集。 训练方法： Word2Vec模型通常使用一个叫做**负采样（Negative Sampling）**的技术来提高训练速度和改善低频词的表示。当词汇表很大时，标准的softmax多分类器计算代价非常高。通过引入负采样，可以显著减少训练过程中的计算负担，从而加快模型训练速度并改善对低频词的表示。
+在Word2Vec的Skip-gram模型中，原始目标是最大化中心词和上下文词对的对数概率之和（让生成的上下文词的条件概率概率相乘最大）。使用标准的softmax函数来计算这些概率时，需要对词汇表中的每个词进行评分，这在大词汇表上是不切实际的。负采样通过将多分类问题简化为多个二分类问题来解决这个问题。
+负采样的工作方式 选择正样本和负样本： 对于每一个训练样本（中心词和一个正上下文词的组合），除了正样本之外，还随机选择K个不是上下文的词作为负样本。这些负样本被假定为与中心词无关的词。 构建二分类问题： 对于每个正样本，目标是使模型预测的概率尽可能地接近1。 对于每个负样本，目标是使模型预测的概率尽可能地接近0。 更新词向量： 使用梯度下降或其他优化算法来更新词向量，以最小化预测概率和目标概率之间的误差。 Word2Vec模型的目标函数关键在于通过学习词向量以最大化特定的概率函数，这个概率函数与单词的上下文有关。根据Word2Vec的两种主要实现——CBOW（Continuous Bag of Words）和Skip-gram——目标函数略有不同。
+Skip-gram模型 Skip-gram模型的核心目标是给定一个特定的中心词，预测其周围的上下文词。假设给定一个词序列 ( w_1, w_2, &hellip;, w_T )，模型的目标是最大化整个语料库中的平均对数概率：
+$$ \frac{1}{T} \sum_{t=1}^{T} \sum_{-c \leq j \leq c, j \neq 0} \log p(w_{t&#43;j} | w_t) $$ 这里，( c ) 是上下文窗口大小，( T ) 是语料中的总词数，( p(w_{t&#43;j} | w_t) ) 是在给定中心词 ( w_t ) 的情况下，预测上下文词 ( w_{t&#43;j} ) 的概率。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://welldonesanmu.github.io/posts/%E5%9F%BA%E4%BA%8E%E9%9A%8F%E6%9C%BA%E6%B8%B8%E8%B5%B0%E7%9A%84%E5%9B%BE%E5%B5%8C%E5%85%A5/" /><meta property="og:image" content="https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-05-11T21:35:16+08:00" />
+<meta property="article:modified_time" content="2024-05-11T21:35:16+08:00" /><meta property="og:site_name" content="Sanmu" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E"/>
+
+<meta name="twitter:title" content="基于随机游走的图嵌入"/>
+<meta name="twitter:description" content="Word2Vec Word2Vec 是一种流行的词嵌入（word embedding）技术，由Google的研究团队在2013年推出。它能够将词汇从高维空间（通常是词汇表的大小）映射到一个低维、连续的向量空间中。这些向量捕捉了词汇之间的语义和语法关系，使得在向量空间中语义上相近的词汇在几何上也相近。
+Word2Vec的两种模型架构： CBOW（Continuous Bag of Words）：
+CBOW模型预测目标词汇（中心词）基于其上下文（周围词）。具体来说，它取一个词的上下文（多个词），将这些词的向量平均，然后用这个平均后的结果来预测中心词。这个模型更适合小型数据集。 Skip-gram：
+与CBOW相反，Skip-gram模型用一个词来预测它的上下文。这意味着模型以中心词的形式输入，然后预测周围的词汇。Skip-gram模型在大型数据集上表现更好，特别是那些包含大量罕见词的数据集。 训练方法： Word2Vec模型通常使用一个叫做**负采样（Negative Sampling）**的技术来提高训练速度和改善低频词的表示。当词汇表很大时，标准的softmax多分类器计算代价非常高。通过引入负采样，可以显著减少训练过程中的计算负担，从而加快模型训练速度并改善对低频词的表示。
+在Word2Vec的Skip-gram模型中，原始目标是最大化中心词和上下文词对的对数概率之和（让生成的上下文词的条件概率概率相乘最大）。使用标准的softmax函数来计算这些概率时，需要对词汇表中的每个词进行评分，这在大词汇表上是不切实际的。负采样通过将多分类问题简化为多个二分类问题来解决这个问题。
+负采样的工作方式 选择正样本和负样本： 对于每一个训练样本（中心词和一个正上下文词的组合），除了正样本之外，还随机选择K个不是上下文的词作为负样本。这些负样本被假定为与中心词无关的词。 构建二分类问题： 对于每个正样本，目标是使模型预测的概率尽可能地接近1。 对于每个负样本，目标是使模型预测的概率尽可能地接近0。 更新词向量： 使用梯度下降或其他优化算法来更新词向量，以最小化预测概率和目标概率之间的误差。 Word2Vec模型的目标函数关键在于通过学习词向量以最大化特定的概率函数，这个概率函数与单词的上下文有关。根据Word2Vec的两种主要实现——CBOW（Continuous Bag of Words）和Skip-gram——目标函数略有不同。
+Skip-gram模型 Skip-gram模型的核心目标是给定一个特定的中心词，预测其周围的上下文词。假设给定一个词序列 ( w_1, w_2, &hellip;, w_T )，模型的目标是最大化整个语料库中的平均对数概率：
+$$ \frac{1}{T} \sum_{t=1}^{T} \sum_{-c \leq j \leq c, j \neq 0} \log p(w_{t&#43;j} | w_t) $$ 这里，( c ) 是上下文窗口大小，( T ) 是语料中的总词数，( p(w_{t&#43;j} | w_t) ) 是在给定中心词 ( w_t ) 的情况下，预测上下文词 ( w_{t&#43;j} ) 的概率。"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Posts",
+      "item": "https://welldonesanmu.github.io/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "基于随机游走的图嵌入",
+      "item": "https://welldonesanmu.github.io/posts/%E5%9F%BA%E4%BA%8E%E9%9A%8F%E6%9C%BA%E6%B8%B8%E8%B5%B0%E7%9A%84%E5%9B%BE%E5%B5%8C%E5%85%A5/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "基于随机游走的图嵌入",
+  "name": "基于随机游走的图嵌入",
+  "description": "Word2Vec Word2Vec 是一种流行的词嵌入（word embedding）技术，由Google的研究团队在2013年推出。它能够将词汇从高维空间（通常是词汇表的大小）映射到一个低维、连续的向量空间中。这些向量捕捉了词汇之间的语义和语法关系，使得在向量空间中语义上相近的词汇在几何上也相近。\nWord2Vec的两种模型架构： CBOW（Continuous Bag of Words）：\nCBOW模型预测目标词汇（中心词）基于其上下文（周围词）。具体来说，它取一个词的上下文（多个词），将这些词的向量平均，然后用这个平均后的结果来预测中心词。这个模型更适合小型数据集。 Skip-gram：\n与CBOW相反，Skip-gram模型用一个词来预测它的上下文。这意味着模型以中心词的形式输入，然后预测周围的词汇。Skip-gram模型在大型数据集上表现更好，特别是那些包含大量罕见词的数据集。 训练方法： Word2Vec模型通常使用一个叫做**负采样（Negative Sampling）**的技术来提高训练速度和改善低频词的表示。当词汇表很大时，标准的softmax多分类器计算代价非常高。通过引入负采样，可以显著减少训练过程中的计算负担，从而加快模型训练速度并改善对低频词的表示。\n在Word2Vec的Skip-gram模型中，原始目标是最大化中心词和上下文词对的对数概率之和（让生成的上下文词的条件概率概率相乘最大）。使用标准的softmax函数来计算这些概率时，需要对词汇表中的每个词进行评分，这在大词汇表上是不切实际的。负采样通过将多分类问题简化为多个二分类问题来解决这个问题。\n负采样的工作方式 选择正样本和负样本： 对于每一个训练样本（中心词和一个正上下文词的组合），除了正样本之外，还随机选择K个不是上下文的词作为负样本。这些负样本被假定为与中心词无关的词。 构建二分类问题： 对于每个正样本，目标是使模型预测的概率尽可能地接近1。 对于每个负样本，目标是使模型预测的概率尽可能地接近0。 更新词向量： 使用梯度下降或其他优化算法来更新词向量，以最小化预测概率和目标概率之间的误差。 Word2Vec模型的目标函数关键在于通过学习词向量以最大化特定的概率函数，这个概率函数与单词的上下文有关。根据Word2Vec的两种主要实现——CBOW（Continuous Bag of Words）和Skip-gram——目标函数略有不同。\nSkip-gram模型 Skip-gram模型的核心目标是给定一个特定的中心词，预测其周围的上下文词。假设给定一个词序列 ( w_1, w_2, \u0026hellip;, w_T )，模型的目标是最大化整个语料库中的平均对数概率：\n$$ \\frac{1}{T} \\sum_{t=1}^{T} \\sum_{-c \\leq j \\leq c, j \\neq 0} \\log p(w_{t+j} | w_t) $$ 这里，( c ) 是上下文窗口大小，( T ) 是语料中的总词数，( p(w_{t+j} | w_t) ) 是在给定中心词 ( w_t ) 的情况下，预测上下文词 ( w_{t+j} ) 的概率。",
+  "keywords": [
+    "Graph embedding"
+  ],
+  "articleBody": "Word2Vec Word2Vec 是一种流行的词嵌入（word embedding）技术，由Google的研究团队在2013年推出。它能够将词汇从高维空间（通常是词汇表的大小）映射到一个低维、连续的向量空间中。这些向量捕捉了词汇之间的语义和语法关系，使得在向量空间中语义上相近的词汇在几何上也相近。\nWord2Vec的两种模型架构： CBOW（Continuous Bag of Words）：\nCBOW模型预测目标词汇（中心词）基于其上下文（周围词）。具体来说，它取一个词的上下文（多个词），将这些词的向量平均，然后用这个平均后的结果来预测中心词。这个模型更适合小型数据集。 Skip-gram：\n与CBOW相反，Skip-gram模型用一个词来预测它的上下文。这意味着模型以中心词的形式输入，然后预测周围的词汇。Skip-gram模型在大型数据集上表现更好，特别是那些包含大量罕见词的数据集。 训练方法： Word2Vec模型通常使用一个叫做**负采样（Negative Sampling）**的技术来提高训练速度和改善低频词的表示。当词汇表很大时，标准的softmax多分类器计算代价非常高。通过引入负采样，可以显著减少训练过程中的计算负担，从而加快模型训练速度并改善对低频词的表示。\n在Word2Vec的Skip-gram模型中，原始目标是最大化中心词和上下文词对的对数概率之和（让生成的上下文词的条件概率概率相乘最大）。使用标准的softmax函数来计算这些概率时，需要对词汇表中的每个词进行评分，这在大词汇表上是不切实际的。负采样通过将多分类问题简化为多个二分类问题来解决这个问题。\n负采样的工作方式 选择正样本和负样本： 对于每一个训练样本（中心词和一个正上下文词的组合），除了正样本之外，还随机选择K个不是上下文的词作为负样本。这些负样本被假定为与中心词无关的词。 构建二分类问题： 对于每个正样本，目标是使模型预测的概率尽可能地接近1。 对于每个负样本，目标是使模型预测的概率尽可能地接近0。 更新词向量： 使用梯度下降或其他优化算法来更新词向量，以最小化预测概率和目标概率之间的误差。 Word2Vec模型的目标函数关键在于通过学习词向量以最大化特定的概率函数，这个概率函数与单词的上下文有关。根据Word2Vec的两种主要实现——CBOW（Continuous Bag of Words）和Skip-gram——目标函数略有不同。\nSkip-gram模型 Skip-gram模型的核心目标是给定一个特定的中心词，预测其周围的上下文词。假设给定一个词序列 ( w_1, w_2, …, w_T )，模型的目标是最大化整个语料库中的平均对数概率：\n$$ \\frac{1}{T} \\sum_{t=1}^{T} \\sum_{-c \\leq j \\leq c, j \\neq 0} \\log p(w_{t+j} | w_t) $$ 这里，( c ) 是上下文窗口大小，( T ) 是语料中的总词数，( p(w_{t+j} | w_t) ) 是在给定中心词 ( w_t ) 的情况下，预测上下文词 ( w_{t+j} ) 的概率。\nCBOW模型 与Skip-gram相反，CBOW模型的目标是从上下文词预测中心词。对于同样的词序列 ( w_1, w_2, …, w_T )，CBOW模型的目标函数是最大化：\n$$ \\frac{1}{T} \\sum_{t=1}^{T} \\log p(w_t | \\text{context of } w_t) $$ 这里，\"( \\text{context of } w_t )\" 是中心词 ( w_t ) 周围的上下文词的集合。\n概率 ( p(w_O | w_I) ) 对于Skip-gram和CBOW，计算上下文词与中心词之间概率 ( p(w_O | w_I) ) 通常使用softmax函数：\n$$ p(w_O | w_I) = \\frac{\\exp({v’{w_O}}^\\top v{w_I})}{\\sum_{w=1}^{W} \\exp({v’{w}}^\\top v{w_I})} $$ 其中，( v_{w_I} ) 是中心词 ( w_I ) 的向量表示，( v’_{w_O} ) 是外部词 ( w_O ) 的输出向量表示，( W ) 是词汇表的大小。\n负采样的优化 由于softmax的分母涉及到词汇表中所有词的遍历，计算成本非常高，特别是当词汇表很大时。为了解决这个问题，Word2Vec引入了负采样。负采样通过修改目标函数，转而优化简化的问题。对于Skip-gram模型，目标函数变为：\n$$ \\sum_{t=1}^{T} \\sum_{-c \\leq j \\leq c, j \\neq 0} \\left[ \\log \\sigma({v’{w{t+j}}}^\\top v_{w_t}) + \\sum_{k=1}^K \\mathbb{E}{w_k \\sim P(w)} \\log \\sigma(-{v’{w_k}}^\\top v_{w_t}) \\right] $$ 这里，( \\sigma ) 是sigmoid函数，( K ) 是负采样中每个正样本对应的负样本数量，( P(w) ) 是单词的抽样分布。\n通过这些目标函数的优化，Word2Vec能够高效地训练大规模语料库中的词向量，并捕捉词之间复杂的语义和语法关系。\nDeepWalk ",
+  "wordCount" : "181",
+  "inLanguage": "en",
+  "datePublished": "2024-05-11T21:35:16+08:00",
+  "dateModified": "2024-05-11T21:35:16+08:00",
+  "author":[{
+    "@type": "Person",
+    "name": "Sanmu"
+  }],
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://welldonesanmu.github.io/posts/%E5%9F%BA%E4%BA%8E%E9%9A%8F%E6%9C%BA%E6%B8%B8%E8%B5%B0%E7%9A%84%E5%9B%BE%E5%B5%8C%E5%85%A5/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Sanmu",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://welldonesanmu.github.io/img/avatars.jpg"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://welldonesanmu.github.io" accesskey="h" title="Home (Alt + H)">
+                <img src="https://welldonesanmu.github.io/img/avatars.jpg" alt="" aria-label="logo"
+                    height="35">Home</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://welldonesanmu.github.io/archives/" title="Archives">
+                    <span>Archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://welldonesanmu.github.io/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://welldonesanmu.github.io/about/" title="About">
+                    <span>About</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="https://welldonesanmu.github.io">Home</a>&nbsp;»&nbsp;<a href="https://welldonesanmu.github.io/posts/">Posts</a></div>
+    <h1 class="post-title">
+      基于随机游走的图嵌入
+    </h1>
+    <div class="post-meta"><span title='2024-05-11 21:35:16 +0800 CST'>May 11, 2024</span>&nbsp;·&nbsp;Sanmu
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="word2vec">Word2Vec<a hidden class="anchor" aria-hidden="true" href="#word2vec">#</a></h1>
+<p><strong>Word2Vec</strong> 是一种流行的词嵌入（word embedding）技术，由Google的研究团队在2013年推出。它能够将词汇从高维空间（通常是词汇表的大小）映射到一个低维、连续的向量空间中。这些向量捕捉了词汇之间的语义和语法关系，使得在向量空间中语义上相近的词汇在几何上也相近。</p>
+<h3 id="word2vec的两种模型架构">Word2Vec的两种模型架构：<a hidden class="anchor" aria-hidden="true" href="#word2vec的两种模型架构">#</a></h3>
+<ol>
+<li>
+<p><strong>CBOW（Continuous Bag of Words）</strong>：</p>
+<ul>
+<li>CBOW模型预测目标词汇（中心词）基于其上下文（周围词）。具体来说，它取一个词的上下文（多个词），将这些词的向量平均，然后用这个平均后的结果来预测中心词。这个模型更适合小型数据集。</li>
+</ul>
+</li>
+<li>
+<p><strong>Skip-gram</strong>：</p>
+<ul>
+<li>与CBOW相反，Skip-gram模型用一个词来预测它的上下文。这意味着模型以中心词的形式输入，然后预测周围的词汇。Skip-gram模型在大型数据集上表现更好，特别是那些包含大量罕见词的数据集。</li>
+</ul>
+</li>
+</ol>
+<h3 id="训练方法">训练方法：<a hidden class="anchor" aria-hidden="true" href="#训练方法">#</a></h3>
+<p>Word2Vec模型通常使用一个叫做**负采样（Negative Sampling）**的技术来提高训练速度和改善低频词的表示。当词汇表很大时，标准的softmax多分类器计算代价非常高。通过引入负采样，可以显著减少训练过程中的计算负担，从而加快模型训练速度并改善对低频词的表示。</p>
+<p>在Word2Vec的Skip-gram模型中，原始目标是最大化中心词和上下文词对的对数概率之和（让生成的上下文词的条件概率概率相乘最大）。使用标准的softmax函数来计算这些概率时，需要对词汇表中的每个词进行评分，这在大词汇表上是不切实际的。负采样通过将多分类问题简化为多个二分类问题来解决这个问题。</p>
+<h3 id="负采样的工作方式">负采样的工作方式<a hidden class="anchor" aria-hidden="true" href="#负采样的工作方式">#</a></h3>
+<ol>
+<li><strong>选择正样本和负样本</strong>：
+<ul>
+<li>对于每一个训练样本（中心词和一个正上下文词的组合），除了正样本之外，还随机选择K个不是上下文的词作为负样本。这些负样本被假定为与中心词无关的词。</li>
+</ul>
+</li>
+<li><strong>构建二分类问题</strong>：
+<ul>
+<li>对于每个正样本，目标是使模型预测的概率尽可能地接近1。</li>
+<li>对于每个负样本，目标是使模型预测的概率尽可能地接近0。</li>
+</ul>
+</li>
+<li><strong>更新词向量</strong>：
+<ul>
+<li>使用梯度下降或其他优化算法来更新词向量，以最小化预测概率和目标概率之间的误差。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<p>Word2Vec模型的目标函数关键在于通过学习词向量以最大化特定的概率函数，这个概率函数与单词的上下文有关。根据Word2Vec的两种主要实现——CBOW（Continuous Bag of Words）和Skip-gram——目标函数略有不同。</p>
+<h3 id="skip-gram模型">Skip-gram模型<a hidden class="anchor" aria-hidden="true" href="#skip-gram模型">#</a></h3>
+<p>Skip-gram模型的核心目标是给定一个特定的中心词，预测其周围的上下文词。假设给定一个词序列 ( w_1, w_2, &hellip;, w_T )，模型的目标是最大化整个语料库中的平均对数概率：</p>
+<p>$$
+\frac{1}{T} \sum_{t=1}^{T} \sum_{-c \leq j \leq c, j \neq 0} \log p(w_{t+j} | w_t)
+$$
+这里，( c ) 是上下文窗口大小，( T ) 是语料中的总词数，( p(w_{t+j} | w_t) ) 是在给定中心词 ( w_t ) 的情况下，预测上下文词 ( w_{t+j} ) 的概率。</p>
+<h3 id="cbow模型">CBOW模型<a hidden class="anchor" aria-hidden="true" href="#cbow模型">#</a></h3>
+<p>与Skip-gram相反，CBOW模型的目标是从上下文词预测中心词。对于同样的词序列 ( w_1, w_2, &hellip;, w_T )，CBOW模型的目标函数是最大化：</p>
+<p>$$
+\frac{1}{T} \sum_{t=1}^{T} \log p(w_t | \text{context of } w_t)
+$$
+这里，&quot;( \text{context of } w_t )&quot; 是中心词 ( w_t ) 周围的上下文词的集合。</p>
+<h3 id="概率--pw_o--w_i-">概率 ( p(w_O | w_I) )<a hidden class="anchor" aria-hidden="true" href="#概率--pw_o--w_i-">#</a></h3>
+<p>对于Skip-gram和CBOW，计算上下文词与中心词之间概率 ( p(w_O | w_I) ) 通常使用softmax函数：</p>
+<p>$$
+p(w_O | w_I) = \frac{\exp({v&rsquo;<em>{w_O}}^\top v</em>{w_I})}{\sum_{w=1}^{W} \exp({v&rsquo;<em>{w}}^\top v</em>{w_I})}
+$$
+其中，( v_{w_I} ) 是中心词 ( w_I ) 的向量表示，( v&rsquo;_{w_O} ) 是外部词 ( w_O ) 的输出向量表示，( W ) 是词汇表的大小。</p>
+<h3 id="负采样的优化">负采样的优化<a hidden class="anchor" aria-hidden="true" href="#负采样的优化">#</a></h3>
+<p>由于softmax的分母涉及到词汇表中所有词的遍历，计算成本非常高，特别是当词汇表很大时。为了解决这个问题，Word2Vec引入了负采样。负采样通过修改目标函数，转而优化简化的问题。对于Skip-gram模型，目标函数变为：</p>
+<p>$$
+\sum_{t=1}^{T} \sum_{-c \leq j \leq c, j \neq 0} \left[ \log \sigma({v&rsquo;<em>{w</em>{t+j}}}^\top v_{w_t}) + \sum_{k=1}^K \mathbb{E}<em>{w_k \sim P(w)} \log \sigma(-{v&rsquo;</em>{w_k}}^\top v_{w_t}) \right]
+$$
+这里，( \sigma ) 是sigmoid函数，( K ) 是负采样中每个正样本对应的负样本数量，( P(w) ) 是单词的抽样分布。</p>
+<p>通过这些目标函数的优化，Word2Vec能够高效地训练大规模语料库中的词向量，并捕捉词之间复杂的语义和语法关系。</p>
+<h1 id="deepwalk">DeepWalk<a hidden class="anchor" aria-hidden="true" href="#deepwalk">#</a></h1>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://welldonesanmu.github.io/tags/graph-embedding/">Graph embedding</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="https://welldonesanmu.github.io/posts/sdgcl/">
+    <span class="title">Next »</span>
+    <br>
+    <span>SDGCL</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2024 <a href="https://welldonesanmu.github.io">Sanmu</a></span>
+
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

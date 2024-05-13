@@ -10,7 +10,17 @@
       <link>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Sat, 11 May 2024 17:59:03 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 11 May 2024 21:35:16 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>推荐系统的中 EMBEDDING 的应用实践</title>
+      <link>https://welldonesanmu.github.io/posts/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E4%B8%AD-embedding-%E7%9A%84%E5%BA%94%E7%94%A8%E5%AE%9E%E8%B7%B5/</link>
+      <pubDate>Sat, 11 May 2024 21:35:16 +0800</pubDate>
+      
+      <guid>https://welldonesanmu.github.io/posts/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E4%B8%AD-embedding-%E7%9A%84%E5%BA%94%E7%94%A8%E5%AE%9E%E8%B7%B5/</guid>
+      <description>Word2Vec &amp;ndash; Item2Vec &amp;ndash; Graph Embedding
+推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)</description>
+    </item>
+    
     <item>
       <title>SDGCL</title>
       <link>https://welldonesanmu.github.io/posts/sdgcl/</link>
