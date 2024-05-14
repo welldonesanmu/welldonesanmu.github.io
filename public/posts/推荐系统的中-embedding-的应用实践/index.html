@@ -7,7 +7,12 @@
 <meta name="robots" content="index, follow">
 <title>推荐系统的中 EMBEDDING 的应用实践 | Sanmu</title>
 <meta name="keywords" content="Graph embedding">
-<meta name="description" content="Word2Vec &ndash; Item2Vec &ndash; Graph Embedding Word2Vec 推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)">
+<meta name="description" content="Word2Vec &ndash; Item2Vec &ndash; Graph Embedding Word2Vec DeepWalk 2014年的模型，主要思想是在物品组成的图结构上进行随机游走（Random Walk），产生大量物品序列，然后将这些物品序列作为训练样本输入Word2Vec进行训练，得到物品的Embedding。
+DeepWalk算法流程：
+LINE Large-scale Information Network Embedding
+动机 这篇论文的初衷是解决两个问题：
+大规模图节点的表示学习 有向、有权图的节点表示学习 无监督的，不使用神经网络架构的Graph Embedding技术。LINE 的方法是基于直接优化节点嵌入向量，通过显式定义的一阶和二阶相似性损失函数进行优化，而不涉及神经网络的多层结构或非线性变换。
+Node2Vec 推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)">
 <meta name="author" content="Sanmu">
 <link rel="canonical" href="https://welldonesanmu.github.io/posts/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E4%B8%AD-embedding-%E7%9A%84%E5%BA%94%E7%94%A8%E5%AE%9E%E8%B7%B5/">
 <meta name="google-site-verification" content="XYZabc">
@@ -60,17 +65,27 @@
 
     </style>
 </noscript><meta property="og:title" content="推荐系统的中 EMBEDDING 的应用实践" />
-<meta property="og:description" content="Word2Vec &ndash; Item2Vec &ndash; Graph Embedding Word2Vec 推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)" />
+<meta property="og:description" content="Word2Vec &ndash; Item2Vec &ndash; Graph Embedding Word2Vec DeepWalk 2014年的模型，主要思想是在物品组成的图结构上进行随机游走（Random Walk），产生大量物品序列，然后将这些物品序列作为训练样本输入Word2Vec进行训练，得到物品的Embedding。
+DeepWalk算法流程：
+LINE Large-scale Information Network Embedding
+动机 这篇论文的初衷是解决两个问题：
+大规模图节点的表示学习 有向、有权图的节点表示学习 无监督的，不使用神经网络架构的Graph Embedding技术。LINE 的方法是基于直接优化节点嵌入向量，通过显式定义的一阶和二阶相似性损失函数进行优化，而不涉及神经网络的多层结构或非线性变换。
+Node2Vec 推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://welldonesanmu.github.io/posts/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E4%B8%AD-embedding-%E7%9A%84%E5%BA%94%E7%94%A8%E5%AE%9E%E8%B7%B5/" /><meta property="og:image" content="https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2024-05-11T21:35:16+08:00" />
-<meta property="article:modified_time" content="2024-05-11T21:35:16+08:00" /><meta property="og:site_name" content="Sanmu" />
+<meta property="article:published_time" content="2024-05-13T21:35:16+08:00" />
+<meta property="article:modified_time" content="2024-05-13T21:35:16+08:00" /><meta property="og:site_name" content="Sanmu" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E"/>
 
 <meta name="twitter:title" content="推荐系统的中 EMBEDDING 的应用实践"/>
-<meta name="twitter:description" content="Word2Vec &ndash; Item2Vec &ndash; Graph Embedding Word2Vec 推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)"/>
+<meta name="twitter:description" content="Word2Vec &ndash; Item2Vec &ndash; Graph Embedding Word2Vec DeepWalk 2014年的模型，主要思想是在物品组成的图结构上进行随机游走（Random Walk），产生大量物品序列，然后将这些物品序列作为训练样本输入Word2Vec进行训练，得到物品的Embedding。
+DeepWalk算法流程：
+LINE Large-scale Information Network Embedding
+动机 这篇论文的初衷是解决两个问题：
+大规模图节点的表示学习 有向、有权图的节点表示学习 无监督的，不使用神经网络架构的Graph Embedding技术。LINE 的方法是基于直接优化节点嵌入向量，通过显式定义的一阶和二阶相似性损失函数进行优化，而不涉及神经网络的多层结构或非线性变换。
+Node2Vec 推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)"/>
 
 
 <script type="application/ld+json">
@@ -99,15 +114,15 @@
   "@type": "BlogPosting",
   "headline": "推荐系统的中 EMBEDDING 的应用实践",
   "name": "推荐系统的中 EMBEDDING 的应用实践",
-  "description": "Word2Vec \u0026ndash; Item2Vec \u0026ndash; Graph Embedding Word2Vec 推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)",
+  "description": "Word2Vec \u0026ndash; Item2Vec \u0026ndash; Graph Embedding Word2Vec DeepWalk 2014年的模型，主要思想是在物品组成的图结构上进行随机游走（Random Walk），产生大量物品序列，然后将这些物品序列作为训练样本输入Word2Vec进行训练，得到物品的Embedding。\nDeepWalk算法流程：\nLINE Large-scale Information Network Embedding\n动机 这篇论文的初衷是解决两个问题：\n大规模图节点的表示学习 有向、有权图的节点表示学习 无监督的，不使用神经网络架构的Graph Embedding技术。LINE 的方法是基于直接优化节点嵌入向量，通过显式定义的一阶和二阶相似性损失函数进行优化，而不涉及神经网络的多层结构或非线性变换。\nNode2Vec 推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)",
   "keywords": [
     "Graph embedding"
   ],
-  "articleBody": "Word2Vec – Item2Vec – Graph Embedding Word2Vec 推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)\n",
-  "wordCount" : "11",
+  "articleBody": "Word2Vec – Item2Vec – Graph Embedding Word2Vec DeepWalk 2014年的模型，主要思想是在物品组成的图结构上进行随机游走（Random Walk），产生大量物品序列，然后将这些物品序列作为训练样本输入Word2Vec进行训练，得到物品的Embedding。\nDeepWalk算法流程：\nLINE Large-scale Information Network Embedding\n动机 这篇论文的初衷是解决两个问题：\n大规模图节点的表示学习 有向、有权图的节点表示学习 无监督的，不使用神经网络架构的Graph Embedding技术。LINE 的方法是基于直接优化节点嵌入向量，通过显式定义的一阶和二阶相似性损失函数进行优化，而不涉及神经网络的多层结构或非线性变换。\nNode2Vec 推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)\n",
+  "wordCount" : "28",
   "inLanguage": "en",
-  "datePublished": "2024-05-11T21:35:16+08:00",
-  "dateModified": "2024-05-11T21:35:16+08:00",
+  "datePublished": "2024-05-13T21:35:16+08:00",
+  "dateModified": "2024-05-13T21:35:16+08:00",
   "author":[{
     "@type": "Person",
     "name": "Sanmu"
@@ -196,13 +211,36 @@
     <h1 class="post-title">
       推荐系统的中 EMBEDDING 的应用实践
     </h1>
-    <div class="post-meta"><span title='2024-05-11 21:35:16 +0800 CST'>May 11, 2024</span>&nbsp;·&nbsp;Sanmu
+    <div class="post-meta"><span title='2024-05-13 21:35:16 +0800 CST'>May 13, 2024</span>&nbsp;·&nbsp;Sanmu
 
 </div>
   </header> 
   <div class="post-content"><h1 id="word2vec----item2vec----graph-embedding">Word2Vec &ndash; Item2Vec &ndash; Graph Embedding<a hidden class="anchor" aria-hidden="true" href="#word2vec----item2vec----graph-embedding">#</a></h1>
 <h2 id="word2vec">Word2Vec<a hidden class="anchor" aria-hidden="true" href="#word2vec">#</a></h2>
 <p><img loading="lazy" src="https://welldonesanmu2.github.io/picx-images-hosting/20240513/%e6%89%ab%e6%8f%8f%e6%96%87%e7%a8%bf_page-0001.32hs5yxpgi.webp" alt="扫描文稿_page-0001"  />
+</p>
+<h2 id="deepwalk">DeepWalk<a hidden class="anchor" aria-hidden="true" href="#deepwalk">#</a></h2>
+<p><img loading="lazy" src="https://welldonesanmu2.github.io/picx-images-hosting/20240514/image.4g4bb4dd1g.webp" alt="image"  />
+</p>
+<p>2014年的模型，主要思想是在物品组成的图结构上进行随机游走（Random Walk），产生大量物品序列，然后将这些物品序列作为训练样本输入Word2Vec进行训练，得到物品的Embedding。</p>
+<p>DeepWalk算法流程：</p>
+<p><img loading="lazy" src="https://welldonesanmu2.github.io/picx-images-hosting/20240514/image.8s34j09xo3.webp" alt="image"  />
+</p>
+<p><img loading="lazy" src="https://welldonesanmu2.github.io/picx-images-hosting/20240514/%e6%89%ab%e6%8f%8f%e6%96%87%e7%a8%bf%281%29_page-0001.8ojil4vyoo.webp" alt="扫描文稿(1)_page-0001"  />
+</p>
+<h2 id="line">LINE<a hidden class="anchor" aria-hidden="true" href="#line">#</a></h2>
+<p>Large-scale Information Network Embedding</p>
+<h3 id="动机">动机<a hidden class="anchor" aria-hidden="true" href="#动机">#</a></h3>
+<p>这篇论文的初衷是解决两个问题：</p>
+<ol>
+<li><strong>大规模</strong>图节点的表示学习</li>
+<li><strong>有向、有权图</strong>的节点表示学习</li>
+</ol>
+<p>无监督的，不使用神经网络架构的Graph Embedding技术。LINE 的方法是基于直接优化节点嵌入向量，通过显式定义的一阶和二阶相似性损失函数进行优化，而不涉及神经网络的多层结构或非线性变换。</p>
+<p><img loading="lazy" src="https://welldonesanmu2.github.io/picx-images-hosting/20240514/%e6%89%ab%e6%8f%8f%e6%96%87%e7%a8%bf%282%29_page-0001.51dyxreuk6.webp" alt="扫描文稿(2)_page-0001"  />
+</p>
+<h2 id="node2vec">Node2Vec<a hidden class="anchor" aria-hidden="true" href="#node2vec">#</a></h2>
+<p><img loading="lazy" src="https://welldonesanmu2.github.io/picx-images-hosting/20240514/%e7%94%b5%e8%af%9d%ef%bc%9a65642222_page-0001.3rb1row4ab.webp" alt="电话：65642222_page-0001"  />
 </p>
 <p><a href="https://lumingdong.cn/application-practice-of-embedding-in-recommendation-system.html">推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)</a></p>
 
