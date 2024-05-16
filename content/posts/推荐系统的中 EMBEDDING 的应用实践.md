@@ -1,7 +1,7 @@
 ---
 title: "推荐系统的中 EMBEDDING 的应用实践"
 date: 2024-05-13T21:35:16+08:00
-lastmod: 2024-5-14T10:35:55+08:00 
+lastmod: 2024-5-16T10:35:55+08:00 
 draft: false
 author: ["Sanmu"] 
 comments: true 
@@ -51,6 +51,8 @@ Large-scale Information Network Embedding
 ![电话：65642222_page-0001](https://welldonesanmu2.github.io/picx-images-hosting/20240514/电话：65642222_page-0001.3rb1row4ab.webp)
 
 ## 4.  EGES
+
+![扫描文稿(3)_page-0001](https://welldonesanmu2.github.io/picx-images-hosting/20240516/扫描文稿(3)_page-0001.7awzkbfdhv.jpg)
 
 [推荐系统中EMBEDDING的应用实践 - 卢明冬的博客 (lumingdong.cn)](https://lumingdong.cn/application-practice-of-embedding-in-recommendation-system.html)
 
