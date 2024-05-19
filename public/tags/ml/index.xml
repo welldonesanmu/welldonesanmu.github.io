@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>ML on Sanmu</title>
+    <link>https://welldonesanmu.github.io/tags/ml/</link>
+    <description>Recent content in ML on Sanmu</description>
+    <image>
+      <title>Sanmu</title>
+      <url>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Thu, 16 May 2024 21:24:29 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/tags/ml/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>机器学习八股</title>
+      <link>https://welldonesanmu.github.io/posts/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%AB%E8%82%A1/</link>
+      <pubDate>Thu, 16 May 2024 21:24:29 +0800</pubDate>
+      
+      <guid>https://welldonesanmu.github.io/posts/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%AB%E8%82%A1/</guid>
+      <description>特征工程 为什么要对数值类型的特征做归一化？ 加快收敛速度：对于一些优化算法（例如梯度下降法），归一化可以加快算法的收敛速度。如果特征的值范围差异很大，那么在计算梯度时，梯度的幅度也会差异很大，可能导致收敛速度变慢或者不稳定。归一化后，特征值被压缩到相同的范围内，使得梯度更加均衡，从而加快收敛速度。 提高模型训练的效率和稳定性：许多机器学习算法在训练过程中都会计算特征之间的距离或者权重。特征值范围较大的数值会对模型的训练产生较大的影响，导致模型可能更加关注这些特征而忽略其他特征。归一化可以使所有特征的数值范围相近，从而使得模型的训练更加平衡和稳定。 提高特征之间的可比性：特征归一化可以使不同特征之间的数值范围相同，便于对不同特征进行比较和分析。例如，在主成分分析（PCA）中，归一化可以确保每个特征对主成分的贡献是基于其方差，而不是其数值大小。 常见的归一化方法包括最小-最大归一化（Min-Max Normalization）和标准化（Standardization）。最小-最大归一化将特征值缩放到[0,1]范围内，而标准化则将特征值转换为均值为0、标准差为1的标准正态分布。
+经典算法 SVM的原理？ 支持向量机 SVM 的基本原理是通过找到一个最优的超平面，将不同类别的数据点分开。它主要关注以下几个方面：
+最大化分类间隔：SVM在寻找超平面时，不仅仅是简单地将数据分开，而是寻找能够最大化分类间隔的超平面。间隔是从超平面到最近数据点（支持向量）的距离，最大化间隔有助于提高模型的泛化能力。
+支持向量：这些是离超平面最近的点，对超平面的位置有决定性影响。优化问题的核心是这些支持向量。
+软间隔和松弛变量：在处理现实中的数据时，完全线性可分的情况很少见。SVM引入软间隔和松弛变量，允许一些数据点被错误分类，以提高模型的鲁棒性和泛化能力。
+核技巧：对于非线性可分的数据，SVM通过核函数将数据映射到更高维的空间，使得在高维空间中数据变得线性可分。常用的核函数包括线性核、多项式核和径向基函数（RBF）核。
+优化问题：SVM通过求解一个凸优化问题来找到最优超平面，这个问题可以表示为：
+$$ \min_{w, b, \xi} \frac{1}{2} |w|^2 + C \sum_{i=1}^{n} \xi_i $$
+其中，$ w $ 是超平面的法向量，$b$ 是偏置项，$\xi_i$ 是松弛变量， $C$ 是正则化参数。
+决策函数：训练完成后，SVM的决策函数为： $$ f(x) = \text{sign} \left( \sum_{i=1}^{n} \alpha_i y_i K(x_i, x) + b \right) \ $$
+其中，$\alpha_i $是拉格朗日乘子，$y_i$ 是训练样本的标签，$x_i$ 是支持向量，$K(x_i, x) $是核函数。
+通过以上步骤，SVM能够有效地处理线性和非线性数据，找到最佳的分类边界，并具有良好的泛化能力。
+（总结：SVM 的基本原理是找到一个最优的超平面，将不同的数据分开，使得不同类别的数据点都在不同的一侧。具体来说，这个超平面需要满足所有样本中距离超平面最近的样本点到超平面的距离最大，这些最近的样本点也被称为支持向量。这个问题可以通过凸优化的方法求解，它本质是一个凸二次规划问题。）
+为什么SVM对异常值不太敏感？ 1. 最大化间隔的目标 SVM的核心目标是找到一个最大化分类间隔的超平面。即使在数据集中存在异常值，SVM仍会尽量最大化正常数据点与超平面之间的间隔。这意味着异常值对超平面的影响相对较小，因为模型更关注间隔的最大化，而不是单个数据点的位置。在SVM中，只有离超平面最近的那些数据点（即支持向量）决定了超平面的最终位置。异常值通常不会成为支持向量，因为它们远离主流数据分布。由于支持向量对超平面的确定起主要作用，因此异常值对超平面的影响较小。
+2. 核技巧的鲁棒性 SVM通过核技巧将数据映射到高维空间，从而在高维空间中实现线性可分。异常值在高维空间中的影响相对低维空间来说可能被进一步削弱，因为核技巧在某种程度上能平滑和分散异常值的影响。
+什么是VAE模型？ VAE，变分自编码器，是一种生成模型，也是自编码器（Autoencoder）的一种扩展。它使用了概率统计方法来生成数据，从而可以在一定程度上避免传统自编码器过拟合的问题。VAE可以看作是由两个部分组成的网络，一个是编码器（Encoder），用来将输入的数据转换为潜在空间（Latent Space）中的概率分布，另一个是解码器（Decoder），用来将潜在空间中的随机变量采样成原始数据。</description>
+    </item>
+    
+  </channel>
+</rss>

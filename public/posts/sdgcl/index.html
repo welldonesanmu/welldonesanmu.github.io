@@ -67,7 +67,27 @@ Graph Diffusion技术是怎么实现的？ Graph Diffusion 模拟信息在图中
         }
 
     </style>
-</noscript><meta property="og:title" content="SDGCL" />
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css" integrity="sha384-bYdxxUwYipFNohQlHt0bjN/LCpueqWz13HufFEV1SUatKs1cm4L6fFgCi1jT643X" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js" integrity="sha384-Qsn9KnoKISj6dI8g7p1HBlNpVx0I8p1SvlwOldgi3IorMle61nQy4zEahWYtljaz" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+<meta property="og:title" content="SDGCL" />
 <meta property="og:description" content="SDGCL 核心思想和主要贡献是提出了一个新颖的自监督学习框架——逐步扩散图对比学习（Stepwise Diffusion Graph Contrastive Learning, SDGCL），用于改进图上的节点分类性能。这个框架主要通过一个逐步扩散 (stepwise diffusion) 的过程生成多个增强视图，这一过程利用了单个神经网络的输出，从而能更有效地捕捉节点之间的复杂交互关系，同时减少了内存和计算负担 (使用一个参数矩阵这和堆叠多层的GraphSAGE等GNN模型相比，减少了n-1个W)。此外，这个框架还设计了一个逐步对比损失（stepwise contrastive loss），通过整合所有扩散视图中正负样本的比较，进一步提高了节点嵌入的区分度。
 对比视图的Intuition Graph通常都是基于图同质性假设，但是异构图balabala。所以我们在一次call / forward中加入stepwise diffusion（本质是change A） 之后生成的中间embedding append并将这些中间层作为负样本，这样只需single layer就可以完成K-hop的长距离信息捕获（消融实验）。
 Stepwise Contrastive Loss 设计 利用逐步扩散过程，从单一神经网络输出生成多个增强视图。对于每一个节点，其在不同视图中的表示构成正样本对，而与其他节点在相同或不同视图中的表示构成负样本对。对每一对节点嵌入（来自同一节点但位于不同扩散视图中），计算它们之间的相似度，并与其与其他节点（负样本）的相似度进行比较。

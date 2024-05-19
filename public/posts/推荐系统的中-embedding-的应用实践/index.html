@@ -64,7 +64,27 @@ DeepWalk算法流程：
         }
 
     </style>
-</noscript><meta property="og:title" content="推荐系统的中 EMBEDDING 的应用实践" />
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css" integrity="sha384-bYdxxUwYipFNohQlHt0bjN/LCpueqWz13HufFEV1SUatKs1cm4L6fFgCi1jT643X" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js" integrity="sha384-Qsn9KnoKISj6dI8g7p1HBlNpVx0I8p1SvlwOldgi3IorMle61nQy4zEahWYtljaz" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          
+          
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          
+          throwOnError : false
+        });
+    });
+</script>
+<meta property="og:title" content="推荐系统的中 EMBEDDING 的应用实践" />
 <meta property="og:description" content="Word2Vec &ndash; Item2Vec &ndash; Graph Embedding Word2Vec Item2Vec Graph Embedding 1. DeepWalk 2014年的模型，主要思想是在物品组成的图结构上进行随机游走（Random Walk），产生大量物品序列，然后将这些物品序列作为训练样本输入Word2Vec进行训练，得到物品的Embedding。
 DeepWalk算法流程：
 2. LINE Large-scale Information Network Embedding
@@ -257,6 +277,11 @@ DeepWalk算法流程：
       <li><a href="https://welldonesanmu.github.io/tags/graph-embedding/">Graph embedding</a></li>
     </ul>
 <nav class="paginav">
+  <a class="prev" href="https://welldonesanmu.github.io/posts/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%85%AB%E8%82%A1/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>机器学习八股</span>
+  </a>
   <a class="next" href="https://welldonesanmu.github.io/posts/sdgcl/">
     <span class="title">Next »</span>
     <br>
