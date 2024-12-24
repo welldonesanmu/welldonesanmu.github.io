@@ -2,19 +2,25 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://welldonesanmu.github.io/posts/25%E7%A7%8B%E6%8B%9B/</loc>
+    <lastmod>2024-12-24T14:57:58+08:00</lastmod>
+  </url><url>
+    <loc>https://welldonesanmu.github.io/tags/interview/</loc>
+    <lastmod>2024-12-24T14:57:58+08:00</lastmod>
+  </url><url>
+    <loc>https://welldonesanmu.github.io/posts/</loc>
+    <lastmod>2024-12-24T14:57:58+08:00</lastmod>
+  </url><url>
+    <loc>https://welldonesanmu.github.io/</loc>
+    <lastmod>2024-12-24T14:57:58+08:00</lastmod>
+  </url><url>
+    <loc>https://welldonesanmu.github.io/tags/</loc>
+    <lastmod>2024-12-24T14:57:58+08:00</lastmod>
+  </url><url>
     <loc>https://welldonesanmu.github.io/tags/dl/</loc>
     <lastmod>2024-05-19T09:06:49+08:00</lastmod>
   </url><url>
     <loc>https://welldonesanmu.github.io/posts/dl/</loc>
-    <lastmod>2024-05-19T09:06:49+08:00</lastmod>
-  </url><url>
-    <loc>https://welldonesanmu.github.io/posts/</loc>
-    <lastmod>2024-05-19T09:06:49+08:00</lastmod>
-  </url><url>
-    <loc>https://welldonesanmu.github.io/</loc>
-    <lastmod>2024-05-19T09:06:49+08:00</lastmod>
-  </url><url>
-    <loc>https://welldonesanmu.github.io/tags/</loc>
     <lastmod>2024-05-19T09:06:49+08:00</lastmod>
   </url><url>
     <loc>https://welldonesanmu.github.io/tags/ml/</loc>
@@ -41,9 +47,6 @@
     <loc>https://welldonesanmu.github.io/posts/graphsage/</loc>
     <lastmod>2024-05-11T15:18:34+08:00</lastmod>
   </url><url>
-    <loc>https://welldonesanmu.github.io/tags/interview/</loc>
-    <lastmod>2024-05-11T21:39:51+08:00</lastmod>
-  </url><url>
     <loc>https://welldonesanmu.github.io/posts/%E5%AD%97%E8%8A%82%E4%B8%80%E9%9D%A2/</loc>
     <lastmod>2024-05-11T21:39:51+08:00</lastmod>
   </url><url>
@@ -69,7 +72,6 @@
     <lastmod>2023-04-09T23:21:57+08:00</lastmod>
   </url><url>
     <loc>https://welldonesanmu.github.io/about/</loc>
-    <priority>0</priority>
   </url><url>
     <loc>https://welldonesanmu.github.io/archives/</loc>
   </url><url>

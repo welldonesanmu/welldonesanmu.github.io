@@ -10,6 +10,7 @@
       <link>https://welldonesanmu.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
     <lastBuildDate>Mon, 13 May 2024 21:35:16 +0800</lastBuildDate><atom:link href="https://welldonesanmu.github.io/tags/graph-embedding/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>推荐系统的中 EMBEDDING 的应用实践</title>
